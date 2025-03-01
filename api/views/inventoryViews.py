@@ -14,19 +14,32 @@ def list_inventory(request):
 @api_view(['POST'])
 def create_inventory(request):
     serializer = InventorySerializer(data=request.data)
+    
     if serializer.is_valid():
+        product = serializer.validated_data['product']
+        requested_quantity = serializer.validated_data['quantity']
+
+        # Verificar si hay suficiente stock
+        if product.quantity < requested_quantity:
+            return Response(
+                {"message": "Error: Not enough stock available for this product."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Crear el registro de inventario
         inventory = serializer.save()
 
         # Actualizar cantidad en la tabla Product
-        inventory.product.quantity += inventory.quantity
-        inventory.product.save()
+        product.quantity -= requested_quantity
+        product.save()
 
         # Verificar si el producto se quedó sin stock
         message = "Inventory created successfully"
-        if inventory.product.quantity <= 0:
+        if product.quantity <= 0:
             message += " - Warning: This product is out of stock!"
 
         return Response({"message": message, "data": serializer.data}, status=status.HTTP_201_CREATED)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

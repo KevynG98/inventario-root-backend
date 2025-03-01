@@ -5,9 +5,10 @@ from ..serializers.productSerializer import ProductSerializer
 
 @api_view(['GET'])
 def list_products(request):
-    products = Product.objects.filter(is_deleted=False)
+    products = Product.objects.all()  # Sin filtro de is_deleted
     serializer = ProductSerializer(products, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def create_product(request):
