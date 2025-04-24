@@ -26,16 +26,34 @@ def register(request):
     serializer = UserSerializer(data=request.data)
     
     if serializer.is_valid():
+        if User.objects.filter(username=serializer.validated_data['username']).exists():
+            return Response({'error': 'El nombre de usuario ya está en uso.'}, status=status.HTTP_400_BAD_REQUEST)
+
         user = User(
             username=serializer.validated_data['username'],
-            email=serializer.validated_data.get('email', '')
+            email=serializer.validated_data.get('email', ''),
+            first_name=serializer.validated_data.get('first_name', ''),
+            last_name=serializer.validated_data.get('last_name', ''),
         )
         user.set_password(serializer.validated_data['password'])  # Encripta la contraseña
         user.save()
         
-        token = Token.objects.create(user=user)
-        return Response({'token': token.key, "user": serializer.data}, status=status.HTTP_201_CREATED)
+        token, _ = Token.objects.get_or_create(user=user)
         
+        return Response({
+            'token': token.key,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'last_login': user.last_login,
+                'date_joined': user.date_joined,
+                'is_superuser': user.is_superuser
+            }
+        }, status=status.HTTP_201_CREATED)
+    
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -56,6 +74,8 @@ def all_users(request):
             'username': user.username,
             'first_name': user.first_name,
             'last_name': user.last_name,
+            'email': user.email,
+            'date_joined': user.date_joined,
             'rol': [{'id': role.id, 'rol': role.name} for role in user.roles.all()]
         } for user in users]
     

@@ -7,4 +7,5 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'roles']
+        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'roles']
+        extra_kwargs = {'password': {'write_only': True}}  # Para no exponer la contraseña en la respuesta

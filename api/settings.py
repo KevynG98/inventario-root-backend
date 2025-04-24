@@ -46,16 +46,21 @@ CORS_ALLOWED_ORIGINS = [
 
 INSTALLED_APPS = [
     'corsheaders',
-    'django.contrib.admin',
+    # 'django.contrib.admin',     # Solo si no usás el panel de admin
     'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.contenttypes',  # Necesaria para modelos en general (no la quites)
+    # 'django.contrib.sessions',  # Solo si no usás sesiones (por ejemplo, si usás solo tokens)
+    # 'django.contrib.messages',  # Útil solo si usás mensajes tipo flash (en templates HTML)
+    'django.contrib.staticfiles',  # Si no servís archivos estáticos desde Django, también podrías quitarla
     'rest_framework',
-    'rest_framework.authtoken',
+    'rest_framework.authtoken',  # Si no usás autenticación por token de DRF
     'api',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'api.utils.pagination.CustomPageNumberPagination',
+    'PAGE_SIZE': 5,  # Este es el valor por defecto si no se indica `page_size`
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

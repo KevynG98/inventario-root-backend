@@ -19,9 +19,8 @@ from django.urls import path, include
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from .path import (
-    userUrl, rolesUrl, productUrl, categoryUrl, supplierUrl, inventoryUrl, 
-    inventoryMovementsUrl, purchaseOrderUrl, purchaseOrderDetailUrl, 
-    salesPath, salesDetailUrl, customerUrl, recepiesUrl
+    userUrl, rolesUrl, productUrl, categoryUrl, inventoryUrl, 
+    inventoryMovementsUrl, customerUrl, recepiesUrl, utilsUrl
 )
 
 def get_csrf(request):
@@ -34,13 +33,9 @@ urlpatterns = [
     path('rol/', include(rolesUrl)),
     path('products/', include(productUrl)),
     path('category/', include(categoryUrl)),
-    # path('supplier/', include(supplierUrl)),
     path('inventory/', include(inventoryUrl)),
     path('inventory-movements/', include(inventoryMovementsUrl)),
-    # path('purchase/', include(purchaseOrderUrl)),
-    # path('purchase-detail/', include(purchaseOrderDetailUrl)),
-    # path('sales/', include(salesPath)),
-    # path('sales-detail/', include(salesDetailUrl)),
     # path('customer/', include(customerUrl)),
     path('receta/', include(recepiesUrl)),
+    path('utils/', include(utilsUrl)),
 ]
