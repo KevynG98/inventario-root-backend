@@ -4,8 +4,8 @@ from ..serializers.rolesSerializer import RoleSerializer  # Importa el serialize
 
 class UserSerializer(serializers.ModelSerializer):
     roles = RoleSerializer(many=True, read_only=True)
-    
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'roles']
-        extra_kwargs = {'password': {'write_only': True}}  # Para no exponer la contraseña en la respuesta
+        fields = ['id', 'username', 'email', 'password', 'first_name', 'last_name', 'roles', 'is_active']  # 🔥 Agregado aquí

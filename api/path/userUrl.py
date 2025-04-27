@@ -8,4 +8,6 @@ urlpatterns = [
     path('profile/', profile),
     path('recent/', recent_users),
     path('delete/<int:id>/', delete_user),
+    path('update/<int:id>/', update_user),
+    path('search/', search_users),
 ]

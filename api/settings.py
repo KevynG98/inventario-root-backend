@@ -59,7 +59,7 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'api.utils.pagination.CustomPageNumberPagination',
-    'PAGE_SIZE': 5,  # Este es el valor por defecto si no se indica `page_size`
+    'PAGE_SIZE': 10,  # Este es el valor por defecto si no se indica `page_size`
 }
 
 MIDDLEWARE = [
