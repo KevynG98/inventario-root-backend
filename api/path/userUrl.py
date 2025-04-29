@@ -10,4 +10,5 @@ urlpatterns = [
     path('delete/<int:id>/', delete_user),
     path('update/<int:id>/', update_user),
     path('search/', search_users),
+    path('admin-reset-password/<int:id>/', admin_reset_password),
 ]

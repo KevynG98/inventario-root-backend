@@ -140,3 +140,19 @@ def search_users(request):
     serializer = UserSerializer(result_page, many=True)
 
     return paginator.get_paginated_response(serializer.data)
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def admin_reset_password(request, id):
+    user = get_object_or_404(User, id=id)
+
+    new_password = request.data.get('password')
+
+    if not new_password:
+        return Response({'error': 'La nueva contraseña es requerida'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({'message': 'Contraseña restablecida correctamente'}, status=status.HTTP_200_OK)
