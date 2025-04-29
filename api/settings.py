@@ -19,6 +19,7 @@ if DEV:
 
     ALLOWED_HOSTS = [
         '192.168.1.18',
+        '10.10.20.16',
         'localhost',
         '127.0.0.1'
     ]
@@ -135,6 +136,7 @@ USE_TZ = True
 
 # --- Archivos estáticos ---
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # --- Primary key default ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -18,3 +18,8 @@ __pycache__/
 # Archivos de sistema
 .DS_Store
 Thumbs.db
+
+runserver_production.py
+iniciar_backend.bat
+
+staticfiles/
