@@ -2,20 +2,30 @@
 from django.db import models
 
 class Paciente(models.Model):
-    nombre = models.CharField(max_length=100, blank=True, null=True)
-    fecha_nacimiento = models.DateField(null=True, blank=True)
-    edad = models.IntegerField(null=True, blank=True)
-    direccion = models.TextField(blank=True, null=True)
-    telefono1 = models.CharField(max_length=20, blank=True, null=True)
-    telefono2 = models.CharField(max_length=20, blank=True, null=True)
-    correo = models.EmailField(blank=True, null=True)
-    observacion = models.TextField(blank=True, null=True)
-    religion = models.CharField(max_length=50, blank=True, null=True)
-    tipo_identificacion = models.CharField(max_length=50, blank=True, null=True)
-    numero_identificacion = models.CharField(max_length=50, blank=True, null=True)
+    primer_nombre = models.CharField(max_length=100)
+    segundo_nombre = models.CharField(max_length=100, blank=True, null=True)
+    primer_apellido = models.CharField(max_length=100)
+    segundo_apellido = models.CharField(max_length=100, blank=True, null=True)
+    apellido_casada = models.CharField(max_length=100, blank=True, null=True)
+
+    genero = models.CharField(max_length=20)
+    estado_civil = models.CharField(max_length=50)
+    fecha_nacimiento = models.DateField()
+    edad = models.IntegerField()
+
+    tipo_identificacion = models.CharField(max_length=50)
+    numero_identificacion = models.CharField(max_length=50)
+
+    telefono = models.CharField(max_length=50, blank=True, null=True)
+
+    # Datos de facturación
+    nit = models.CharField(max_length=50)
+    nombre_factura = models.CharField(max_length=150)
+    direccion_factura = models.CharField(max_length=200)
+    correo_factura = models.EmailField(blank=True, null=True)
 
     def __str__(self):
-        return self.nombre
+        return f"{self.primer_nombre} {self.primer_apellido}"
 
 class Acompanante(models.Model):
     nombre = models.CharField(max_length=100, blank=True, null=True)
