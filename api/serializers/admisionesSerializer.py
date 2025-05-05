@@ -143,3 +143,16 @@ class AdmisionSerializer(serializers.ModelSerializer):
             **validated_data
         )
         return admision
+
+class AdmisionDetalleSerializer(serializers.ModelSerializer):
+    paciente = PacienteSerializer()
+    acompanante = AcompananteSerializer()
+    responsable = ResponsableSerializer()
+    esposo = EsposoSerializer()
+    datos_laborales = DatosLaboralesSerializer()
+    datos_seguro = DatosSeguroSerializer()
+    garantia_pago = GarantiaPagoSerializer()
+
+    class Meta:
+        model = Admision
+        fields = '__all__'

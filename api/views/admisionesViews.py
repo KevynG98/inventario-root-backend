@@ -1,4 +1,4 @@
-
+from rest_framework.generics import ListAPIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -6,6 +6,7 @@ from rest_framework import status
 from collections import defaultdict
 from ..models.admisionesModel import Admision
 from ..serializers.admisionesSerializer import AdmisionSerializer
+from ..serializers.admisionesSerializer import AdmisionDetalleSerializer
 
 # Crear admisión
 @api_view(['POST'])
@@ -24,7 +25,7 @@ def obtener_admision(request, admision_id):
     except Admision.DoesNotExist:
         return Response({"error": "Admisión no encontrada"}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = AdmisionSerializer(admision)
+    serializer = AdmisionDetalleSerializer(admision)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Listar admisiones agrupadas por área (no paginadas)
@@ -87,3 +88,7 @@ def listar_admisiones_resumen(request):
         })
 
     return paginator.get_paginated_response(data)
+
+class ListadoAdmisionesView(ListAPIView):
+    queryset = Admision.objects.all()
+    serializer_class = AdmisionDetalleSerializer
