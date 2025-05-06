@@ -4,7 +4,7 @@ from django.db import models
 class Paciente(models.Model):
     primer_nombre = models.CharField(max_length=100)
     segundo_nombre = models.CharField(max_length=100, blank=True, null=True)
-    primer_apellido = models.CharField(max_length=100)
+    primer_apellido = models.CharField(max_length=100, blank=True, null=True)
     segundo_apellido = models.CharField(max_length=100, blank=True, null=True)
     apellido_casada = models.CharField(max_length=100, blank=True, null=True)
 
@@ -15,13 +15,20 @@ class Paciente(models.Model):
 
     tipo_identificacion = models.CharField(max_length=50)
     numero_identificacion = models.CharField(max_length=50)
-
     telefono = models.CharField(max_length=50, blank=True, null=True)
 
+    # Datos adicionales (nuevos)
+    direccion = models.CharField(max_length=200, blank=True, null=True)
+    telefono1 = models.CharField(max_length=50, blank=True, null=True)
+    telefono2 = models.CharField(max_length=50, blank=True, null=True)
+    correo = models.EmailField(blank=True, null=True)
+    observacion = models.TextField(blank=True, null=True)
+    religion = models.CharField(max_length=50, blank=True, null=True)
+
     # Datos de facturación
-    nit = models.CharField(max_length=50)
-    nombre_factura = models.CharField(max_length=150)
-    direccion_factura = models.CharField(max_length=200)
+    nit = models.CharField(max_length=50, blank=True, null=True)
+    nombre_factura = models.CharField(max_length=150, blank=True, null=True)
+    direccion_factura = models.CharField(max_length=200, blank=True, null=True)
     correo_factura = models.EmailField(blank=True, null=True)
 
     def __str__(self):
@@ -123,4 +130,4 @@ class Admision(models.Model):
     fecha = models.DateField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
-        return f"Admisión de {self.paciente.nombre} ({self.fecha})"
+        return f"Admisión de {self.paciente.primer_nombre} {self.paciente.primer_apellido} ({self.fecha})"
