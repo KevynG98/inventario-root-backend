@@ -78,7 +78,7 @@ def listar_admisiones_resumen(request):
         data.append({
             "id_admision": admision.id,
             "fecha_admision": admision.fecha.strftime('%d/%m/%Y'),
-            "paciente": f"{paciente.nombre} (Edad: {paciente.edad} NAC: {paciente.fecha_nacimiento})",
+            "paciente": " ".join(f"{paciente.primer_nombre} {paciente.segundo_nombre or ''} {paciente.primer_apellido} {paciente.segundo_apellido or ''} {paciente.apellido_casada or ''}".split()) + f" (Edad: {paciente.edad} NAC: {paciente.fecha_nacimiento})",
             "identificacion": f"{paciente.tipo_identificacion}: {paciente.numero_identificacion}",
             "genero": getattr(paciente, "genero", "N/D"),
             "aseguradora": admision.datos_seguro.aseguradora if admision.datos_seguro else "SIN SEGURO",
@@ -88,6 +88,19 @@ def listar_admisiones_resumen(request):
         })
 
     return paginator.get_paginated_response(data)
+
+@api_view(['PUT'])
+def editar_admision(request, pk):
+    try:
+        admision = Admision.objects.get(pk=pk)
+    except Admision.DoesNotExist:
+        return Response({'error': 'Admisión no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = AdmisionSerializer(admision, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ListadoAdmisionesView(ListAPIView):
     queryset = Admision.objects.all()
