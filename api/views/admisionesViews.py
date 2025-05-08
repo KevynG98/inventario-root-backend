@@ -5,8 +5,10 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from collections import defaultdict
 from ..models.admisionesModel import Admision
+from ..models.admisionesModel import Habitacion
 from ..serializers.admisionesSerializer import AdmisionSerializer
 from ..serializers.admisionesSerializer import AdmisionDetalleSerializer
+from ..serializers.admisionesSerializer import HabitacionSerializer
 
 # Crear admisión
 @api_view(['POST'])
@@ -101,6 +103,35 @@ def editar_admision(request, pk):
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#HABITACIONES INICIO
+@api_view(['POST'])
+def crear_habitacion(request):
+    serializer = HabitacionSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def listar_habitaciones(request):
+    habitaciones = Habitacion.objects.all().order_by('id')
+    paginator = AdmisionResumenPagination()
+    resultado = paginator.paginate_queryset(habitaciones, request)
+
+    data = []
+    for habitacion in resultado:
+        data.append({
+            "id": habitacion.id,
+            "codigo": habitacion.codigo,
+            "area": habitacion.area,
+            "estado": habitacion.estado,
+            "admision": habitacion.admision,
+            "paciente": habitacion.paciente,
+            "nivel": habitacion.nivel
+        })
+
+    return paginator.get_paginated_response(data)
 
 class ListadoAdmisionesView(ListAPIView):
     queryset = Admision.objects.all()

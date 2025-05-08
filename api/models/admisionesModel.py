@@ -131,3 +131,14 @@ class Admision(models.Model):
 
     def __str__(self):
         return f"Admisión de {self.paciente.primer_nombre} {self.paciente.primer_apellido} ({self.fecha})"
+
+class Habitacion(models.Model):
+    codigo = models.CharField(max_length=10)
+    area = models.CharField(max_length=100)
+    estado = models.CharField(max_length=100)
+    admision = models.IntegerField()
+    paciente = models.CharField(max_length=200, null=True, blank=True)  # solo el nombre o identificador
+    nivel = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"{self.codigo} - {self.area}"

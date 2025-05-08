@@ -2,7 +2,8 @@
 from rest_framework import serializers
 from ..models.admisionesModel import (
     Paciente, Acompanante, Responsable, Esposo,
-    DatosLaborales, DatosSeguro, GarantiaPago, Admision
+    DatosLaborales, DatosSeguro, GarantiaPago, Admision,
+    Habitacion
 )
 
 class PacienteSerializer(serializers.ModelSerializer):
@@ -248,3 +249,8 @@ class AdmisionSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+    
+class HabitacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Habitacion
+        fields = ['id', 'codigo', 'area', 'estado', 'admision', 'paciente', 'nivel']
