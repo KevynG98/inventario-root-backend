@@ -1,10 +1,10 @@
-
 from rest_framework import serializers
 from ..models.admisionesModel import (
     Paciente, Acompanante, Responsable, Esposo,
     DatosLaborales, DatosSeguro, GarantiaPago, Admision
 )
 
+# 🔹 Serializers simples para cada modelo
 class PacienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paciente
@@ -40,7 +40,24 @@ class GarantiaPagoSerializer(serializers.ModelSerializer):
         model = GarantiaPago
         fields = '__all__'
 
-class AdmisionSerializer(serializers.ModelSerializer):
+
+# 🔹 Para detalle (GET)
+class AdmisionDetalleSerializer(serializers.ModelSerializer):
+    paciente = PacienteSerializer()
+    acompanante = AcompananteSerializer()
+    responsable = ResponsableSerializer()
+    esposo = EsposoSerializer()
+    datos_laborales = DatosLaboralesSerializer()
+    datos_seguro = DatosSeguroSerializer()
+    garantia_pago = GarantiaPagoSerializer()
+
+    class Meta:
+        model = Admision
+        fields = '__all__'
+
+
+# 🔹 Para creación (POST) desde datos planos
+class AdmisionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Admision
         fields = ['area_admision', 'habitacion', 'medico_tratante']
@@ -156,95 +173,132 @@ class AdmisionSerializer(serializers.ModelSerializer):
 
         return admision
 
-class AdmisionDetalleSerializer(serializers.ModelSerializer):
-    paciente = PacienteSerializer()
-    acompanante = AcompananteSerializer()
-    responsable = ResponsableSerializer()
-    esposo = EsposoSerializer()
-    datos_laborales = DatosLaboralesSerializer()
-    datos_seguro = DatosSeguroSerializer()
-    garantia_pago = GarantiaPagoSerializer()
 
+# 🔹 Para actualización (PUT) — espera datos anidados
+
+class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Admision
-        fields = '__all__'
-        
-class AdmisionSerializer(serializers.ModelSerializer):
-    paciente = serializers.DictField()
-    acompanante = serializers.DictField(required=False)
-    responsable = serializers.DictField(required=False)
-    esposo = serializers.DictField(required=False)
-    datos_laborales = serializers.DictField(required=False)
-    datos_seguro = serializers.DictField(required=False)
-    garantia_pago = serializers.DictField(required=False)
-
-    class Meta:
-        model = Admision
-        fields = '__all__'
+        fields = ['area_admision', 'habitacion', 'medico_tratante']
 
     def update(self, instance, validated_data):
+        data = self.context['request'].data
+
+        def actualizar_si_existe(obj, field, data, key):
+            if key in data and data[key] is not None:
+                setattr(obj, field, data[key])
+
         # Paciente
-        paciente_data = validated_data.pop('paciente')
-        paciente, _ = Paciente.objects.update_or_create(id=instance.paciente.id, defaults=paciente_data)
-        instance.paciente = paciente
+        paciente = instance.paciente
+        actualizar_si_existe(paciente, 'primer_nombre', data, 'p_primer_nombre')
+        actualizar_si_existe(paciente, 'segundo_nombre', data, 'p_segundo_nombre')
+        actualizar_si_existe(paciente, 'primer_apellido', data, 'p_primer_apellido')
+        actualizar_si_existe(paciente, 'segundo_apellido', data, 'p_segundo_apellido')
+        actualizar_si_existe(paciente, 'apellido_casada', data, 'p_apellido_casada')
+        actualizar_si_existe(paciente, 'genero', data, 'p_genero')
+        actualizar_si_existe(paciente, 'estado_civil', data, 'p_estado_civil')
+        actualizar_si_existe(paciente, 'fecha_nacimiento', data, 'p_fecha_nacimiento')
+        actualizar_si_existe(paciente, 'edad', data, 'edad')
+        actualizar_si_existe(paciente, 'tipo_identificacion', data, 'p_tipo_identificacion')
+        actualizar_si_existe(paciente, 'numero_identificacion', data, 'p_numero_identificacion')
+        actualizar_si_existe(paciente, 'telefono', data, 'p_telefono')
+        actualizar_si_existe(paciente, 'direccion', data, 'direccion')
+        actualizar_si_existe(paciente, 'telefono1', data, 'telefono1')
+        actualizar_si_existe(paciente, 'telefono2', data, 'telefono2')
+        actualizar_si_existe(paciente, 'correo', data, 'correo')
+        actualizar_si_existe(paciente, 'observacion', data, 'observacion')
+        actualizar_si_existe(paciente, 'religion', data, 'religion')
+        actualizar_si_existe(paciente, 'nit', data, 'nit')
+        actualizar_si_existe(paciente, 'nombre_factura', data, 'nombreFactura')
+        actualizar_si_existe(paciente, 'direccion_factura', data, 'direccionFactura')
+        actualizar_si_existe(paciente, 'correo_factura', data, 'correoFactura')
+        paciente.save()
 
         # Acompañante
-        if 'acompanante' in validated_data:
-            acompanante_data = validated_data.pop('acompanante')
-            acompanante, _ = Acompanante.objects.update_or_create(
-                id=instance.acompanante.id if instance.acompanante else None,
-                defaults=acompanante_data
-            )
-            instance.acompanante = acompanante
+        if instance.acompanante:
+            actualizar_si_existe(instance.acompanante, 'nombre', data, 'acompananteNombre')
+            actualizar_si_existe(instance.acompanante, 'telefono', data, 'acompananteTelefono')
+            instance.acompanante.save()
 
         # Responsable
-        if 'responsable' in validated_data:
-            responsable_data = validated_data.pop('responsable')
-            responsable, _ = Responsable.objects.update_or_create(
-                id=instance.responsable.id if instance.responsable else None,
-                defaults=responsable_data
-            )
-            instance.responsable = responsable
+        if instance.responsable:
+            r = instance.responsable
+            actualizar_si_existe(r, 'primer_nombre', data, 'responsablePrimerNombre')
+            actualizar_si_existe(r, 'segundo_nombre', data, 'responsableSegundoNombre')
+            actualizar_si_existe(r, 'primer_apellido', data, 'responsablePrimerApellido')
+            actualizar_si_existe(r, 'segundo_apellido', data, 'responsableSegundoApellido')
+            actualizar_si_existe(r, 'tipo_identificacion', data, 'responsableTipoIdentificacion')
+            actualizar_si_existe(r, 'numero_identificacion', data, 'responsableNumeroIdentificacion')
+            actualizar_si_existe(r, 'fecha_nacimiento', data, 'responsableFechaNacimiento')
+            actualizar_si_existe(r, 'edad', data, 'responsableEdad')
+            actualizar_si_existe(r, 'genero', data, 'responsableGenero')
+            actualizar_si_existe(r, 'relacion_paciente', data, 'responsableRelacionPaciente')
+            actualizar_si_existe(r, 'ocupacion', data, 'responsableOcupacion')
+            actualizar_si_existe(r, 'domicilio', data, 'responsableDomicilio')
+            actualizar_si_existe(r, 'empresa', data, 'responsableEmpresa')
+            actualizar_si_existe(r, 'direccion', data, 'responsableDireccion')
+            actualizar_si_existe(r, 'telefono1', data, 'responsableTelefono1')
+            actualizar_si_existe(r, 'telefono2', data, 'responsableTelefono2')
+            actualizar_si_existe(r, 'contacto', data, 'responsableContacto')
+            actualizar_si_existe(r, 'email', data, 'responsableEmail')
+            r.save()
 
         # Esposo
-        if 'esposo' in validated_data:
-            esposo_data = validated_data.pop('esposo')
-            esposo, _ = Esposo.objects.update_or_create(
-                id=instance.esposo.id if instance.esposo else None,
-                defaults=esposo_data
-            )
-            instance.esposo = esposo
+        if instance.esposo:
+            e = instance.esposo
+            actualizar_si_existe(e, 'nombre', data, 'esposoNombre')
+            actualizar_si_existe(e, 'genero', data, 'esposoGenero')
+            actualizar_si_existe(e, 'tipo_identificacion', data, 'esposoTipoIdentificacion')
+            actualizar_si_existe(e, 'numero_identificacion', data, 'esposoNumeroIdentificacion')
+            actualizar_si_existe(e, 'fecha_nacimiento', data, 'esposoFechaNacimiento')
+            actualizar_si_existe(e, 'edad', data, 'esposoEdad')
+            actualizar_si_existe(e, 'telefono1', data, 'esposoTelefono1')
+            actualizar_si_existe(e, 'telefono2', data, 'esposoTelefono2')
+            actualizar_si_existe(e, 'domicilio', data, 'esposoDomicilio')
+            actualizar_si_existe(e, 'ocupacion', data, 'esposoOcupacion')
+            actualizar_si_existe(e, 'empresa', data, 'esposoEmpresa')
+            actualizar_si_existe(e, 'direccion', data, 'esposoDireccion')
+            actualizar_si_existe(e, 'email', data, 'esposoEmail')
+            e.save()
 
         # Datos laborales
-        if 'datos_laborales' in validated_data:
-            laborales_data = validated_data.pop('datos_laborales')
-            datos_laborales, _ = DatosLaborales.objects.update_or_create(
-                id=instance.datos_laborales.id if instance.datos_laborales else None,
-                defaults=laborales_data
-            )
-            instance.datos_laborales = datos_laborales
+        if instance.datos_laborales:
+            d = instance.datos_laborales
+            actualizar_si_existe(d, 'empresa', data, 'empresa')
+            actualizar_si_existe(d, 'direccion', data, 'direccionEmpresa')
+            actualizar_si_existe(d, 'telefono1', data, 'telefonoEmpresa1')
+            actualizar_si_existe(d, 'telefono2', data, 'telefonoEmpresa2')
+            actualizar_si_existe(d, 'ocupacion', data, 'ocupacion')
+            d.save()
 
-        # Datos seguro
-        if 'datos_seguro' in validated_data:
-            seguro_data = validated_data.pop('datos_seguro')
-            datos_seguro, _ = DatosSeguro.objects.update_or_create(
-                id=instance.datos_seguro.id if instance.datos_seguro else None,
-                defaults=seguro_data
-            )
-            instance.datos_seguro = datos_seguro
+        # Datos del seguro
+        if instance.datos_seguro:
+            s = instance.datos_seguro
+            actualizar_si_existe(s, 'aseguradora', data, 'aseguradora')
+            actualizar_si_existe(s, 'lista_precios', data, 'listaPrecios')
+            actualizar_si_existe(s, 'carnet', data, 'carnet')
+            actualizar_si_existe(s, 'certificado', data, 'certificado')
+            actualizar_si_existe(s, 'nombre_titular', data, 'nombreTitular')
+            actualizar_si_existe(s, 'coaseguro', data, 'coaseguro')
+            actualizar_si_existe(s, 'valor_copago', data, 'valorCopago')
+            actualizar_si_existe(s, 'valor_deducible', data, 'valorDeducible')
+            s.save()
 
         # Garantía de pago
-        if 'garantia_pago' in validated_data:
-            garantia_data = validated_data.pop('garantia_pago')
-            garantia_pago, _ = GarantiaPago.objects.update_or_create(
-                id=instance.garantia_pago.id if instance.garantia_pago else None,
-                defaults=garantia_data
-            )
-            instance.garantia_pago = garantia_pago
+        if instance.garantia_pago:
+            g = instance.garantia_pago
+            actualizar_si_existe(g, 'tipo', data, 'tipoGarantia')
+            actualizar_si_existe(g, 'numero_tc_cheque', data, 'numeroTcCheque')
+            actualizar_si_existe(g, 'nit', data, 'nit')
+            actualizar_si_existe(g, 'nombre_factura', data, 'nombreFactura')
+            actualizar_si_existe(g, 'direccion_factura', data, 'direccionFactura')
+            actualizar_si_existe(g, 'correo_factura', data, 'correoFactura')
+            g.save()
 
-        # Campos directos de admisión
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-
+        # Campos propios de admisión
+        actualizar_si_existe(instance, 'area_admision', data, 'area_admision')
+        actualizar_si_existe(instance, 'habitacion', data, 'habitacion')
+        actualizar_si_existe(instance, 'medico_tratante', data, 'medicoTratante')
         instance.save()
+
         return instance

@@ -5,19 +5,22 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from collections import defaultdict
 from ..models.admisionesModel import Admision
-from ..serializers.admisionesSerializer import AdmisionSerializer
-from ..serializers.admisionesSerializer import AdmisionDetalleSerializer
+from ..serializers.admisionesSerializer import (
+    AdmisionCreateSerializer,
+    AdmisionUpdateFlatSerializer,
+    AdmisionDetalleSerializer
+)
 
-# Crear admisión
+# 🔹 Crear admisión (POST - datos planos)
 @api_view(['POST'])
 def crear_admision(request):
-    serializer = AdmisionSerializer(data=request.data, context={"request": request})
+    serializer = AdmisionCreateSerializer(data=request.data, context={"request": request})
     if serializer.is_valid():
         admision = serializer.save()
         return Response({"message": "Admisión creada correctamente", "id": admision.id}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# Obtener admisión
+# 🔹 Obtener admisión por ID (GET)
 @api_view(['GET'])
 def obtener_admision(request, admision_id):
     try:
@@ -28,18 +31,18 @@ def obtener_admision(request, admision_id):
     serializer = AdmisionDetalleSerializer(admision)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-# Listar admisiones agrupadas por área (no paginadas)
+# 🔹 Listar agrupadas por área (GET - sin paginación)
 @api_view(['GET'])
 def listar_admisiones_por_area(request):
     admisiones = Admision.objects.select_related('paciente').all()
     agrupadas = defaultdict(list)
     for admision in admisiones:
-        serialized = AdmisionSerializer(admision).data
+        serialized = AdmisionDetalleSerializer(admision).data
         area = admision.area_admision or "Sin área"
         agrupadas[area].append(serialized)
     return Response(agrupadas, status=status.HTTP_200_OK)
 
-# Resumen por área (no paginado)
+# 🔹 Resumen por área (GET - sin paginación)
 @api_view(['GET'])
 def resumen_admisiones_por_area(request):
     admisiones = Admision.objects.select_related('paciente', 'datos_seguro').all()
@@ -61,7 +64,7 @@ def resumen_admisiones_por_area(request):
         agrupadas[area].append(resumen)
     return Response(agrupadas, status=status.HTTP_200_OK)
 
-# Paginado global
+# 🔹 Paginación global para resumen
 class AdmisionResumenPagination(PageNumberPagination):
     page_size = 25
     page_size_query_param = 'page_size'
@@ -89,6 +92,7 @@ def listar_admisiones_resumen(request):
 
     return paginator.get_paginated_response(data)
 
+# 🔹 Editar admisión (PUT - datos anidados)
 @api_view(['PUT'])
 def editar_admision(request, pk):
     try:
@@ -96,12 +100,13 @@ def editar_admision(request, pk):
     except Admision.DoesNotExist:
         return Response({'error': 'Admisión no encontrada'}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = AdmisionSerializer(admision, data=request.data)
+    serializer = AdmisionUpdateFlatSerializer(admision, data=request.data, context={"request": request})
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data)
+        return Response({"message": "Admisión actualizada correctamente"})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# 🔹 ListView (no modificada)
 class ListadoAdmisionesView(ListAPIView):
     queryset = Admision.objects.all()
     serializer_class = AdmisionDetalleSerializer
