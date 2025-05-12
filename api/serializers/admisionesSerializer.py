@@ -311,16 +311,23 @@ class HabitacionSerializer(serializers.ModelSerializer):
         fields = ['id', 'codigo', 'area', 'estado', 'admision', 'paciente', 'nivel']
         
 class MovimientoCuentaSerializer(serializers.ModelSerializer):
-    class Meta:
+     class Meta:
         model = MovimientoCuenta
         fields = [
             'id',
             'fecha',
             'categoria',
             'descripcion',
+            'facturar_a',
             'cantidad',
             'precio_unitario',
-            'total'
+            'total',
+            'precio_aseguradora',
+            'total_aseguradora',
+            'precio_paciente',
+            'total_paciente',
+            'observacion',
+            'admision'
         ]
 
 class EstadoCuentaSerializer(serializers.ModelSerializer):

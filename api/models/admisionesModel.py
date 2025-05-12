@@ -156,11 +156,18 @@ class Habitacion(models.Model):
 class MovimientoCuenta(models.Model):
     admision = models.ForeignKey(Admision, on_delete=models.CASCADE, related_name='movimientos')
     fecha = models.DateField(auto_now_add=True)
-    categoria = models.CharField(max_length=100)  # Ej: FARMACIA, LABORATORIO, ENC
+    categoria = models.CharField(max_length=100)
     descripcion = models.TextField()
+    facturar_a = models.CharField(max_length=100, blank=True, null=True)
+
     cantidad = models.PositiveIntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=12, decimal_places=2)
 
-    def __str__(self):
-        return f"{self.categoria} - {self.descripcion[:20]}..."
+    precio_aseguradora = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    total_aseguradora = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+
+    precio_paciente = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    total_paciente = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+
+    observacion = models.TextField(blank=True, null=True)

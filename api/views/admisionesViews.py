@@ -11,7 +11,8 @@ from ..serializers.admisionesSerializer import (
     AdmisionUpdateFlatSerializer,
     AdmisionDetalleSerializer,
     HabitacionSerializer,
-    EstadoCuentaSerializer
+    EstadoCuentaSerializer,
+    MovimientoCuentaSerializer
 )
 
 # 🔹 Crear admisión (POST - datos planos)
@@ -167,6 +168,14 @@ def estado_cuenta(request, admision_id):
     admision = get_object_or_404(Admision, pk=admision_id)
     serializer = EstadoCuentaSerializer(admision)
     return Response(serializer.data)
+
+@api_view(['POST'])
+def crear_movimiento(request):
+    serializer = MovimientoCuentaSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # 🔹 ListView (no modificada)
 class ListadoAdmisionesView(ListAPIView):
