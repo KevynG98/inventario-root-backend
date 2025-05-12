@@ -133,6 +133,30 @@ def listar_habitaciones(request):
 
     return paginator.get_paginated_response(data)
 
+@api_view(['GET'])
+def listar_admisiones_estado(request):
+    admisiones = Admision.objects.select_related('paciente', 'datos_seguro').order_by('-fecha')
+
+    data = []
+    for admision in admisiones:
+        paciente = admision.paciente
+        datos_seguro = admision.datos_seguro
+
+        data.append({
+            "id_admision": admision.id,
+            "fecha_admision": admision.fecha.strftime('%d/%m/%Y') if admision.fecha else '',
+            "paciente": " ".join(f"{paciente.primer_nombre} {paciente.segundo_nombre or ''} {paciente.primer_apellido} {paciente.segundo_apellido or ''} {paciente.apellido_casada or ''}".split()),
+            "identificacion": f"{paciente.tipo_identificacion}: {paciente.numero_identificacion}",
+            "genero": paciente.genero,
+            "aseguradora": datos_seguro.aseguradora if datos_seguro else '',
+            "area": admision.area_admision,
+            "habitacion": admision.habitacion,
+            "medico": admision.medico_tratante,
+            "estado": admision.estado,
+        })
+
+    return Response(data)
+
 class ListadoAdmisionesView(ListAPIView):
     queryset = Admision.objects.all()
     serializer_class = AdmisionDetalleSerializer

@@ -143,7 +143,8 @@ class AdmisionSerializer(serializers.ModelSerializer):
             direccion_factura=request_data.get('direccionFactura'),
             correo_factura=request_data.get('correoFactura')
         )
-
+        
+        estado = validated_data.pop('estado', 'ingresado') 
         admision = Admision.objects.create(
             paciente=paciente,
             acompanante=acompanante,
@@ -152,6 +153,7 @@ class AdmisionSerializer(serializers.ModelSerializer):
             datos_laborales=datos_laborales,
             datos_seguro=datos_seguro,
             garantia_pago=garantia_pago,
+            estado=estado,
             **validated_data
         )
 

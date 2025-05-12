@@ -8,7 +8,8 @@ from ..views.admisionesViews import (
     editar_admision,
     ListadoAdmisionesView,
     crear_habitacion,
-    listar_habitaciones
+    listar_habitaciones,
+    listar_admisiones_estado
 )
 
 urlpatterns = [
@@ -19,6 +20,7 @@ urlpatterns = [
     path('admisiones-resumen/', listar_admisiones_resumen, name='listar_admisiones_resumen'),
     path('all/', ListadoAdmisionesView.as_view(), name='listar_admisiones'),
     path('editar/<int:pk>/', editar_admision),
+    path('admisiones-resumen-estado/', listar_admisiones_estado),
     #HABITACIONES
     path('habitaciones-listar/', listar_habitaciones, name='Crear habitacion'),
     path('habitaciones-crear/', crear_habitacion, name='crear_habitacion'),
