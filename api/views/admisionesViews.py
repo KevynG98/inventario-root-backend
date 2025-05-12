@@ -1,3 +1,8 @@
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from django.conf import settings
+import os
 from rest_framework.generics import ListAPIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -176,6 +181,34 @@ def crear_movimiento(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def generar_estado_cuenta_pdf(request, admision_id):
+    admision = get_object_or_404(Admision, pk=admision_id)
+    serializer = EstadoCuentaSerializer(admision)
+    data = serializer.data
+
+    agrupado = defaultdict(list)
+    for mov in data.get("movimientos", []):
+        categoria = mov.get("categoria", "Sin categoría")
+        agrupado[categoria].append(mov)
+
+    agrupado_lista = list(agrupado.items())
+
+    # ✅ Ruta absoluta al logo
+    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'el-naranjo.png')
+
+    html_string = render_to_string('estado_cuenta.html', {
+        'data': data,
+        'movimientos_por_categoria': agrupado_lista,
+        'logo_path': f'file://{logo_path}',
+    })
+
+    pdf_file = HTML(string=html_string).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="estado_cuenta_{admision_id}.pdf"'
+    return response
 
 # 🔹 ListView (no modificada)
 class ListadoAdmisionesView(ListAPIView):
