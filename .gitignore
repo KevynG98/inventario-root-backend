@@ -23,3 +23,6 @@ runserver_production.py
 iniciar_backend.bat
 
 staticfiles/
+
+__pycache__/
+*.pyc

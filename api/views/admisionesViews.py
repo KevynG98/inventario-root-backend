@@ -1,23 +1,35 @@
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
+from django.conf import settings
+import os
 from rest_framework.generics import ListAPIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from collections import defaultdict
-from ..models.admisionesModel import Admision
-from ..serializers.admisionesSerializer import AdmisionSerializer
-from ..serializers.admisionesSerializer import AdmisionDetalleSerializer
+from rest_framework.generics import get_object_or_404
+from ..models.admisionesModel import Admision, Habitacion
+from ..serializers.admisionesSerializer import (
+    AdmisionCreateSerializer,
+    AdmisionUpdateFlatSerializer,
+    AdmisionDetalleSerializer,
+    HabitacionSerializer,
+    EstadoCuentaSerializer,
+    MovimientoCuentaSerializer
+)
 
-# Crear admisión
+# 🔹 Crear admisión (POST - datos planos)
 @api_view(['POST'])
 def crear_admision(request):
-    serializer = AdmisionSerializer(data=request.data, context={"request": request})
+    serializer = AdmisionCreateSerializer(data=request.data, context={"request": request})
     if serializer.is_valid():
         admision = serializer.save()
         return Response({"message": "Admisión creada correctamente", "id": admision.id}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# Obtener admisión
+# 🔹 Obtener admisión por ID (GET)
 @api_view(['GET'])
 def obtener_admision(request, admision_id):
     try:
@@ -28,18 +40,18 @@ def obtener_admision(request, admision_id):
     serializer = AdmisionDetalleSerializer(admision)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
-# Listar admisiones agrupadas por área (no paginadas)
+# 🔹 Listar agrupadas por área (GET - sin paginación)
 @api_view(['GET'])
 def listar_admisiones_por_area(request):
     admisiones = Admision.objects.select_related('paciente').all()
     agrupadas = defaultdict(list)
     for admision in admisiones:
-        serialized = AdmisionSerializer(admision).data
+        serialized = AdmisionDetalleSerializer(admision).data
         area = admision.area_admision or "Sin área"
         agrupadas[area].append(serialized)
     return Response(agrupadas, status=status.HTTP_200_OK)
 
-# Resumen por área (no paginado)
+# 🔹 Resumen por área (GET - sin paginación)
 @api_view(['GET'])
 def resumen_admisiones_por_area(request):
     admisiones = Admision.objects.select_related('paciente', 'datos_seguro').all()
@@ -61,7 +73,7 @@ def resumen_admisiones_por_area(request):
         agrupadas[area].append(resumen)
     return Response(agrupadas, status=status.HTTP_200_OK)
 
-# Paginado global
+# 🔹 Paginación global para resumen
 class AdmisionResumenPagination(PageNumberPagination):
     page_size = 25
     page_size_query_param = 'page_size'
@@ -78,7 +90,7 @@ def listar_admisiones_resumen(request):
         data.append({
             "id_admision": admision.id,
             "fecha_admision": admision.fecha.strftime('%d/%m/%Y'),
-            "paciente": f"{paciente.nombre} (Edad: {paciente.edad} NAC: {paciente.fecha_nacimiento})",
+            "paciente": " ".join(f"{paciente.primer_nombre} {paciente.segundo_nombre or ''} {paciente.primer_apellido} {paciente.segundo_apellido or ''} {paciente.apellido_casada or ''}".split()) + f" (Edad: {paciente.edad} NAC: {paciente.fecha_nacimiento})",
             "identificacion": f"{paciente.tipo_identificacion}: {paciente.numero_identificacion}",
             "genero": getattr(paciente, "genero", "N/D"),
             "aseguradora": admision.datos_seguro.aseguradora if admision.datos_seguro else "SIN SEGURO",
@@ -89,6 +101,116 @@ def listar_admisiones_resumen(request):
 
     return paginator.get_paginated_response(data)
 
+# 🔹 Editar admisión (PUT - datos anidados)
+@api_view(['PUT'])
+def editar_admision(request, pk):
+    try:
+        admision = Admision.objects.get(pk=pk)
+    except Admision.DoesNotExist:
+        return Response({'error': 'Admisión no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = AdmisionUpdateFlatSerializer(admision, data=request.data, context={"request": request})
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Admisión actualizada correctamente"})
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#HABITACIONES INICIO
+@api_view(['POST'])
+def crear_habitacion(request):
+    serializer = HabitacionSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def listar_habitaciones(request):
+    habitaciones = Habitacion.objects.all().order_by('id')
+    paginator = AdmisionResumenPagination()
+    resultado = paginator.paginate_queryset(habitaciones, request)
+
+    data = []
+    for habitacion in resultado:
+        data.append({
+            "id": habitacion.id,
+            "codigo": habitacion.codigo,
+            "area": habitacion.area,
+            "estado": habitacion.estado,
+            "admision": habitacion.admision,
+            "paciente": habitacion.paciente,
+            "nivel": habitacion.nivel
+        })
+
+    return paginator.get_paginated_response(data)
+
+@api_view(['GET'])
+def listar_admisiones_estado(request):
+    admisiones = Admision.objects.select_related('paciente', 'datos_seguro').order_by('-fecha')
+
+    data = []
+    for admision in admisiones:
+        paciente = admision.paciente
+        datos_seguro = admision.datos_seguro
+
+        data.append({
+            "id_admision": admision.id,
+            "fecha_admision": admision.fecha.strftime('%d/%m/%Y') if admision.fecha else '',
+            "paciente": " ".join(f"{paciente.primer_nombre} {paciente.segundo_nombre or ''} {paciente.primer_apellido} {paciente.segundo_apellido or ''} {paciente.apellido_casada or ''}".split()),
+            "identificacion": f"{paciente.tipo_identificacion}: {paciente.numero_identificacion}",
+            "genero": paciente.genero,
+            "aseguradora": datos_seguro.aseguradora if datos_seguro else '',
+            "area": admision.area_admision,
+            "habitacion": admision.habitacion,
+            "medico": admision.medico_tratante,
+            "estado": admision.estado,
+        })
+
+    return Response(data)
+
+@api_view(['GET'])
+def estado_cuenta(request, admision_id):
+    admision = get_object_or_404(Admision, pk=admision_id)
+    serializer = EstadoCuentaSerializer(admision)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+def crear_movimiento(request):
+    serializer = MovimientoCuentaSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def generar_estado_cuenta_pdf(request, admision_id):
+    admision = get_object_or_404(Admision, pk=admision_id)
+    serializer = EstadoCuentaSerializer(admision)
+    data = serializer.data
+
+    agrupado = defaultdict(list)
+    for mov in data.get("movimientos", []):
+        categoria = mov.get("categoria", "Sin categoría")
+        agrupado[categoria].append(mov)
+
+    agrupado_lista = list(agrupado.items())
+
+    # ✅ Ruta absoluta al logo
+    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'el-naranjo.png')
+
+    html_string = render_to_string('estado_cuenta.html', {
+        'data': data,
+        'movimientos_por_categoria': agrupado_lista,
+        'logo_path': f'file://{logo_path}',
+    })
+
+    pdf_file = HTML(string=html_string).write_pdf()
+
+    response = HttpResponse(pdf_file, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="estado_cuenta_{admision_id}.pdf"'
+    return response
+
+# 🔹 ListView (no modificada)
 class ListadoAdmisionesView(ListAPIView):
     queryset = Admision.objects.all()
     serializer_class = AdmisionDetalleSerializer

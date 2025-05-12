@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 10px;
+        margin: 20px;
+      }
+
+      .encabezado {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        width: 120px;
+      }
+
+      .titulo-contenedor {
+        text-align: right;
+      }
+
+      .titulo {
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .subtitulo {
+        font-size: 12px;
+      }
+
+      .datos-paciente {
+        margin-top: 10px;
+      }
+
+      .datos-paciente p {
+        margin: 1px 0;
+        font-size: 10px;
+      }
+
+      .seccion {
+        background-color: #f0b404;
+        color: black;
+        padding: 4px 8px;
+        font-weight: bold;
+        margin-top: 15px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2px;
+        margin-bottom: 10px;
+      }
+
+      th,
+      td {
+        border: 1px solid #000;
+        padding: 4px;
+        text-align: left;
+        font-size: 10px;
+      }
+
+      th {
+        background-color: #40a4cc;
+      }
+
+      .total-row td {
+        font-weight: bold;
+        border-top: 2px solid #000;
+      }
+
+      .nota {
+        font-size: 9px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="encabezado">
+      <img src="{{ logo_path }}" class="logo" />
+      <div class="titulo-contenedor">
+        <div class="titulo">ESTADO DE CUENTA</div>
+        <div class="subtitulo">NO DEFINITIVO</div>
+      </div>
+    </div>
+
+    <div class="datos-paciente">
+      <p><strong>Paciente:</strong> {{ data.paciente.nombre }}</p>
+      <p><strong>Género:</strong> {{ data.paciente.genero }}</p>
+      <p><strong>Edad:</strong> {{ data.paciente.edad }} años</p>
+      <p><strong>Fecha de admisión:</strong> {{ data.fecha }}</p>
+      <p><strong>Área:</strong> {{ data.area_admision }} &nbsp;&nbsp;&nbsp;
+         <strong>Habitación:</strong> {{ data.habitacion }}</p>
+    </div>
+
+    {% for categoria, items in movimientos_por_categoria %}
+      <div class="seccion">{{ categoria }}</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Descripción</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+            <tr>
+              <td>{{ item.fecha }}</td>
+              <td>{{ item.descripcion }}</td>
+              <td>{{ item.cantidad }}</td>
+              <td>{{ item.precio_unitario }}</td>
+              <td>{{ item.total }}</td>
+            </tr>
+          {% endfor %}
+          <tr class="total-row">
+            <td colspan="4">TOTAL {{ categoria }}</td>
+            <td>
+              {{
+                items|sum(attribute='total')
+              }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    {% empty %}
+      <p><em>No hay movimientos registrados para esta admisión.</em></p>
+    {% endfor %}
+
+    <p class="nota">
+      <strong>NOTA:</strong> El presente estado de cuenta NO es definitivo y por lo tanto puede variar dependiendo del tratamiento del paciente.
+    </p>
+  </body>
+</html>
