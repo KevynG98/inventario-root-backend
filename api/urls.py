@@ -20,7 +20,8 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from .path import (
     userUrl, rolesUrl, productUrl, categoryUrl, inventoryUrl, 
-    inventoryMovementsUrl, customerUrl, recepiesUrl, utilsUrl
+    inventoryMovementsUrl, customerUrl, utilsUrl,
+    admisionesUrl
 )
 
 def get_csrf(request):
@@ -31,11 +32,11 @@ urlpatterns = [
     # path('admin/', admin.site.urls),
     path('user/', include(userUrl)),
     path('rol/', include(rolesUrl)),
+    path('admisiones/', include(admisionesUrl)),
     path('products/', include(productUrl)),
     path('category/', include(categoryUrl)),
     path('inventory/', include(inventoryUrl)),
     path('inventory-movements/', include(inventoryMovementsUrl)),
     # path('customer/', include(customerUrl)),
-    path('receta/', include(recepiesUrl)),
     path('utils/', include(utilsUrl)),
 ]
