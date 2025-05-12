@@ -152,3 +152,15 @@ class Habitacion(models.Model):
 
     def __str__(self):
         return f"{self.codigo} - {self.area}"
+    
+class MovimientoCuenta(models.Model):
+    admision = models.ForeignKey(Admision, on_delete=models.CASCADE, related_name='movimientos')
+    fecha = models.DateField(auto_now_add=True)
+    categoria = models.CharField(max_length=100)  # Ej: FARMACIA, LABORATORIO, ENC
+    descripcion = models.TextField()
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=12, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.categoria} - {self.descripcion[:20]}..."

@@ -4,12 +4,14 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from collections import defaultdict
+from rest_framework.generics import get_object_or_404
 from ..models.admisionesModel import Admision, Habitacion
 from ..serializers.admisionesSerializer import (
     AdmisionCreateSerializer,
     AdmisionUpdateFlatSerializer,
     AdmisionDetalleSerializer,
-    HabitacionSerializer
+    HabitacionSerializer,
+    EstadoCuentaSerializer
 )
 
 # 🔹 Crear admisión (POST - datos planos)
@@ -159,6 +161,12 @@ def listar_admisiones_estado(request):
         })
 
     return Response(data)
+
+@api_view(['GET'])
+def estado_cuenta(request, admision_id):
+    admision = get_object_or_404(Admision, pk=admision_id)
+    serializer = EstadoCuentaSerializer(admision)
+    return Response(serializer.data)
 
 # 🔹 ListView (no modificada)
 class ListadoAdmisionesView(ListAPIView):
