@@ -4,11 +4,12 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from collections import defaultdict
-from ..models.admisionesModel import Admision
+from ..models.admisionesModel import Admision, Habitacion
 from ..serializers.admisionesSerializer import (
     AdmisionCreateSerializer,
     AdmisionUpdateFlatSerializer,
-    AdmisionDetalleSerializer
+    AdmisionDetalleSerializer,
+    HabitacionSerializer
 )
 
 # 🔹 Crear admisión (POST - datos planos)
@@ -105,6 +106,59 @@ def editar_admision(request, pk):
         serializer.save()
         return Response({"message": "Admisión actualizada correctamente"})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#HABITACIONES INICIO
+@api_view(['POST'])
+def crear_habitacion(request):
+    serializer = HabitacionSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def listar_habitaciones(request):
+    habitaciones = Habitacion.objects.all().order_by('id')
+    paginator = AdmisionResumenPagination()
+    resultado = paginator.paginate_queryset(habitaciones, request)
+
+    data = []
+    for habitacion in resultado:
+        data.append({
+            "id": habitacion.id,
+            "codigo": habitacion.codigo,
+            "area": habitacion.area,
+            "estado": habitacion.estado,
+            "admision": habitacion.admision,
+            "paciente": habitacion.paciente,
+            "nivel": habitacion.nivel
+        })
+
+    return paginator.get_paginated_response(data)
+
+@api_view(['GET'])
+def listar_admisiones_estado(request):
+    admisiones = Admision.objects.select_related('paciente', 'datos_seguro').order_by('-fecha')
+
+    data = []
+    for admision in admisiones:
+        paciente = admision.paciente
+        datos_seguro = admision.datos_seguro
+
+        data.append({
+            "id_admision": admision.id,
+            "fecha_admision": admision.fecha.strftime('%d/%m/%Y') if admision.fecha else '',
+            "paciente": " ".join(f"{paciente.primer_nombre} {paciente.segundo_nombre or ''} {paciente.primer_apellido} {paciente.segundo_apellido or ''} {paciente.apellido_casada or ''}".split()),
+            "identificacion": f"{paciente.tipo_identificacion}: {paciente.numero_identificacion}",
+            "genero": paciente.genero,
+            "aseguradora": datos_seguro.aseguradora if datos_seguro else '',
+            "area": admision.area_admision,
+            "habitacion": admision.habitacion,
+            "medico": admision.medico_tratante,
+            "estado": admision.estado,
+        })
+
+    return Response(data)
 
 # 🔹 ListView (no modificada)
 class ListadoAdmisionesView(ListAPIView):

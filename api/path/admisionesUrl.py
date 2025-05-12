@@ -6,7 +6,10 @@ from ..views.admisionesViews import (
     resumen_admisiones_por_area,
     listar_admisiones_resumen,
     editar_admision,
-    ListadoAdmisionesView
+    ListadoAdmisionesView,
+    crear_habitacion,
+    listar_habitaciones,
+    listar_admisiones_estado
 )
 
 urlpatterns = [
@@ -19,4 +22,9 @@ urlpatterns = [
     path('admisiones-por-area/', listar_admisiones_por_area, name='listar_admisiones_por_area'),
     path('admisiones-resumen-por-area/', resumen_admisiones_por_area, name='resumen_admisiones_por_area'),
     path('admisiones-resumen/', listar_admisiones_resumen, name='listar_admisiones_resumen'),
+    path('admisiones-resumen-estado/', listar_admisiones_estado, name='listar_admisiones_estado'),
+
+    # HABITACIONES
+    path('habitaciones-listar/', listar_habitaciones, name='listar_habitaciones'),
+    path('habitaciones-crear/', crear_habitacion, name='crear_habitacion'),
 ]

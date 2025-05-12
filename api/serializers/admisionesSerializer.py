@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from ..models.admisionesModel import (
     Paciente, Acompanante, Responsable, Esposo,
-    DatosLaborales, DatosSeguro, GarantiaPago, Admision
+    DatosLaborales, DatosSeguro, GarantiaPago, Admision,
+    Habitacion
 )
 
 # 🔹 Serializers simples para cada modelo
@@ -159,7 +160,8 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
             direccion_factura=request_data.get('direccionFactura'),
             correo_factura=request_data.get('correoFactura')
         )
-
+        
+        estado = validated_data.pop('estado', 'ingresado') 
         admision = Admision.objects.create(
             paciente=paciente,
             acompanante=acompanante,
@@ -168,6 +170,7 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
             datos_laborales=datos_laborales,
             datos_seguro=datos_seguro,
             garantia_pago=garantia_pago,
+            estado=estado,
             **validated_data
         )
 
@@ -300,5 +303,9 @@ class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
         actualizar_si_existe(instance, 'habitacion', data, 'habitacion')
         actualizar_si_existe(instance, 'medico_tratante', data, 'medicoTratante')
         instance.save()
-
         return instance
+    
+class HabitacionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Habitacion
+        fields = ['id', 'codigo', 'area', 'estado', 'admision', 'paciente', 'nivel']
