@@ -15,13 +15,16 @@ from ..views.admisionesViews import (
 urlpatterns = [
     path('', crear_admision, name='crear_admision'),
     path('<int:admision_id>/', obtener_admision, name='obtener_admision'),
+    path('editar/<int:pk>/', editar_admision, name='editar_admision'),
+    path('all/', ListadoAdmisionesView.as_view(), name='listar_admisiones'),
+
+    # Extras
     path('admisiones-por-area/', listar_admisiones_por_area, name='listar_admisiones_por_area'),
     path('admisiones-resumen-por-area/', resumen_admisiones_por_area, name='resumen_admisiones_por_area'),
     path('admisiones-resumen/', listar_admisiones_resumen, name='listar_admisiones_resumen'),
-    path('all/', ListadoAdmisionesView.as_view(), name='listar_admisiones'),
-    path('editar/<int:pk>/', editar_admision),
-    path('admisiones-resumen-estado/', listar_admisiones_estado),
-    #HABITACIONES
-    path('habitaciones-listar/', listar_habitaciones, name='Crear habitacion'),
+    path('admisiones-resumen-estado/', listar_admisiones_estado, name='listar_admisiones_estado'),
+
+    # HABITACIONES
+    path('habitaciones-listar/', listar_habitaciones, name='listar_habitaciones'),
     path('habitaciones-crear/', crear_habitacion, name='crear_habitacion'),
 ]
