@@ -2,7 +2,7 @@ from rest_framework import serializers
 from ..models.admisionesModel import (
     Paciente, Acompanante, Responsable, Esposo,
     DatosLaborales, DatosSeguro, GarantiaPago, Admision,
-    Habitacion
+    Habitacion, MovimientoCuenta
 )
 
 # 🔹 Serializers simples para cada modelo
@@ -309,3 +309,47 @@ class HabitacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Habitacion
         fields = ['id', 'codigo', 'area', 'estado', 'admision', 'paciente', 'nivel']
+        
+class MovimientoCuentaSerializer(serializers.ModelSerializer):
+     class Meta:
+        model = MovimientoCuenta
+        fields = [
+            'id',
+            'fecha',
+            'categoria',
+            'descripcion',
+            'facturar_a',
+            'cantidad',
+            'precio_unitario',
+            'total',
+            'precio_aseguradora',
+            'total_aseguradora',
+            'precio_paciente',
+            'total_paciente',
+            'observacion',
+            'admision'
+        ]
+
+class EstadoCuentaSerializer(serializers.ModelSerializer):
+    paciente = serializers.SerializerMethodField()
+    movimientos = MovimientoCuentaSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Admision
+        fields = [
+            'id',
+            'fecha',
+            'area_admision',
+            'habitacion',
+            'medico_tratante',
+            'paciente',
+            'movimientos'
+        ]
+
+    def get_paciente(self, obj):
+        paciente = obj.paciente
+        return {
+            'nombre': f"{paciente.primer_nombre} {paciente.primer_apellido}",
+            'genero': paciente.genero,
+            'edad': paciente.edad
+        }
