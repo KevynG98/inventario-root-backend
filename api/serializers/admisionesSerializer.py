@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Max
 from ..models.admisionesModel import (
     Paciente, Acompanante, Responsable, Esposo,
     DatosLaborales, DatosSeguro, GarantiaPago, Admision,
@@ -162,7 +163,12 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
         )
         
         estado = validated_data.pop('estado', 'ingresado') 
+        
+        ultimo_id = Admision.objects.aggregate(Max('id'))['id__max']
+        nuevo_id = max(7000, (ultimo_id or 6999) + 1)
+        
         admision = Admision.objects.create(
+            id=nuevo_id,
             paciente=paciente,
             acompanante=acompanante,
             responsable=responsable,

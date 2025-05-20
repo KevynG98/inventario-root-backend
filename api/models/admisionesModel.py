@@ -8,13 +8,13 @@ class Paciente(models.Model):
     segundo_apellido = models.CharField(max_length=100, blank=True, null=True)
     apellido_casada = models.CharField(max_length=100, blank=True, null=True)
 
-    genero = models.CharField(max_length=20)
-    estado_civil = models.CharField(max_length=50)
-    fecha_nacimiento = models.DateField()
-    edad = models.IntegerField()
+    genero = models.CharField(max_length=20, blank=True, null=True)
+    estado_civil = models.CharField(max_length=50, blank=True, null=True)
+    fecha_nacimiento = models.DateField(blank=True, null=True)
+    edad = models.IntegerField(blank=True, null=True)
 
-    tipo_identificacion = models.CharField(max_length=50)
-    numero_identificacion = models.CharField(max_length=50)
+    tipo_identificacion = models.CharField(max_length=50, blank=True, null=True)
+    numero_identificacion = models.CharField(max_length=50, blank=True, null=True)
     telefono = models.CharField(max_length=50, blank=True, null=True)
 
     # Datos adicionales (nuevos)
@@ -117,6 +117,7 @@ class GarantiaPago(models.Model):
         return self.tipo
 
 class Admision(models.Model):
+    id = models.IntegerField(primary_key=True)
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
     acompanante = models.ForeignKey(Acompanante, on_delete=models.SET_NULL, null=True, blank=True)
     responsable = models.ForeignKey(Responsable, on_delete=models.SET_NULL, null=True, blank=True)
