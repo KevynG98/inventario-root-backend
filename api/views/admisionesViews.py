@@ -80,7 +80,7 @@ class AdmisionResumenPagination(PageNumberPagination):
 
 @api_view(['GET'])
 def listar_admisiones_resumen(request):
-    admisiones = Admision.objects.select_related('paciente', 'datos_seguro').order_by('-fecha')
+    admisiones = Admision.objects.select_related('paciente', 'datos_seguro').order_by('id')
     paginator = AdmisionResumenPagination()
     resultado = paginator.paginate_queryset(admisiones, request)
 
