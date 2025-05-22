@@ -10,12 +10,13 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
 from collections import defaultdict
 from rest_framework.generics import get_object_or_404
-from ..models.admisionesModel import Admision, Habitacion
+
+from api.utils.pagination import CustomPageNumberPagination
+from ..models.admisionesModel import Admision
 from ..serializers.admisionesSerializer import (
     AdmisionCreateSerializer,
     AdmisionUpdateFlatSerializer,
     AdmisionDetalleSerializer,
-    HabitacionSerializer,
     EstadoCuentaSerializer,
     MovimientoCuentaSerializer
 )
@@ -73,15 +74,10 @@ def resumen_admisiones_por_area(request):
         agrupadas[area].append(resumen)
     return Response(agrupadas, status=status.HTTP_200_OK)
 
-# 🔹 Paginación global para resumen
-class AdmisionResumenPagination(PageNumberPagination):
-    page_size = 25
-    page_size_query_param = 'page_size'
-
 @api_view(['GET'])
 def listar_admisiones_resumen(request):
     admisiones = Admision.objects.select_related('paciente', 'datos_seguro').order_by('id')
-    paginator = AdmisionResumenPagination()
+    paginator = CustomPageNumberPagination()
     resultado = paginator.paginate_queryset(admisiones, request)
 
     data = []
@@ -114,35 +110,6 @@ def editar_admision(request, pk):
         serializer.save()
         return Response({"message": "Admisión actualizada correctamente"})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#HABITACIONES INICIO
-@api_view(['POST'])
-def crear_habitacion(request):
-    serializer = HabitacionSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET'])
-def listar_habitaciones(request):
-    habitaciones = Habitacion.objects.all().order_by('id')
-    paginator = AdmisionResumenPagination()
-    resultado = paginator.paginate_queryset(habitaciones, request)
-
-    data = []
-    for habitacion in resultado:
-        data.append({
-            "id": habitacion.id,
-            "codigo": habitacion.codigo,
-            "area": habitacion.area,
-            "estado": habitacion.estado,
-            "admision": habitacion.admision,
-            "paciente": habitacion.paciente,
-            "nivel": habitacion.nivel
-        })
-
-    return paginator.get_paginated_response(data)
 
 @api_view(['GET'])
 def listar_admisiones_estado(request):

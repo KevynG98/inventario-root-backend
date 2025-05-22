@@ -7,8 +7,6 @@ from ..views.admisionesViews import (
     listar_admisiones_resumen,
     editar_admision,
     ListadoAdmisionesView,
-    crear_habitacion,
-    listar_habitaciones,
     listar_admisiones_estado,
     estado_cuenta,
     crear_movimiento,
@@ -31,8 +29,4 @@ urlpatterns = [
     path('estado-cuenta/<int:admision_id>/', estado_cuenta, name='estado-cuenta'),
     path('movimientos-crear/', crear_movimiento, name='crear-movimiento'),
     path('estado-cuenta-imprimir/<int:admision_id>/', generar_estado_cuenta_pdf),
-
-    # HABITACIONES
-    path('habitaciones-listar/', listar_habitaciones, name='listar_habitaciones'),
-    path('habitaciones-crear/', crear_habitacion, name='crear_habitacion'),
 ]
