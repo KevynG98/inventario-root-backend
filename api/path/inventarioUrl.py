@@ -7,6 +7,13 @@ from ..views.inventarioProveedoresViews import (
     obtener_proveedor,
     eliminar_proveedor
 )
+from ..views.inventarioMarcaViews import (
+    listar_marcas,
+    crear_marca,
+    actualizar_marca,
+    eliminar_marca,
+    obtener_marca,
+)
 
 urlpatterns = [
     #proveedores CRUD
@@ -18,5 +25,9 @@ urlpatterns = [
     path('proveedores-eliminar/<int:pk>/', eliminar_proveedor, name='eliminar_proveedor'),
     
     #Marcas CRUD
-    
+    path('marcas/', listar_marcas, name='listar_marcas'),
+    path('marcas-crear/', crear_marca, name='crear_marca'),
+    path('marcas-actualizar/<int:pk>/', actualizar_marca, name='actualizar_marca'),
+    path('marcas-eliminar/<int:pk>/', eliminar_marca, name='eliminar_marca'),
+    path('marcas/<int:pk>/', obtener_marca, name='obtener_marca'),
 ]
