@@ -21,6 +21,13 @@ from ..views.inventarioMedidaViews import (
     eliminar_medida,
     obtener_medida,
 )
+from ..views.inventarioCategoriasViews import (
+    listar_categorias,
+    crear_categoria,
+    actualizar_categoria,
+    eliminar_categoria,
+    obtener_categoria,
+)
 
 urlpatterns = [
     #proveedores CRUD
@@ -43,4 +50,11 @@ urlpatterns = [
     path('medidas-actualizar/<int:pk>/', actualizar_medida, name='actualizar_medida'),
     path('medidas-eliminar/<int:pk>/', eliminar_medida, name='eliminar_medida'),
     path('medidas/<int:pk>/', obtener_medida, name='obtener_medida'),
+    
+    #Categorias CRUD
+    path('categorias/', listar_categorias, name='listar_categorias'),
+    path('categorias-crear/', crear_categoria, name='crear_categoria'),
+    path('categorias-actualizar/<int:pk>/', actualizar_categoria, name='actualizar_categoria'),
+    path('categorias-eliminar/<int:pk>/', eliminar_categoria, name='eliminar_categoria'),
+    path('categorias/<int:pk>/', obtener_categoria, name='obtener_categoria'),
 ]
