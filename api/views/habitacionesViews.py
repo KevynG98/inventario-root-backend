@@ -1,15 +1,12 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination #hacer un archivo general para paginacion
+from rest_framework.pagination import PageNumberPagination
 from rest_framework import status
-from collections import defaultdict
 from rest_framework.generics import get_object_or_404
 
 from api.utils.pagination import CustomPageNumberPagination
 from ..models.habitacionModel import Habitacion
-from ..serializers.habitacionSerializer import (
-    HabitacionSerializer
-)
+from ..serializers.habitacionSerializer import HabitacionSerializer
 
 @api_view(['POST'])
 def crear_habitacion(request):
@@ -21,38 +18,47 @@ def crear_habitacion(request):
 
 @api_view(['GET'])
 def listar_habitaciones(request):
-    habitaciones = Habitacion.objects.all().order_by('id')
+    habitaciones = Habitacion.objects.filter(is_active=True).order_by('area')
     paginator = CustomPageNumberPagination()
     resultado = paginator.paginate_queryset(habitaciones, request)
 
-    data = []
-    for habitacion in resultado:
-        data.append({
-            "id": habitacion.id,
-            "codigo": habitacion.codigo,
-            "area": habitacion.area,
-            "estado": habitacion.estado,
-            "admision": habitacion.admision,
-            "paciente": habitacion.paciente,
-            "nivel": habitacion.nivel
-        })
-
-    return paginator.get_paginated_response(data)
+    serializer = HabitacionSerializer(resultado, many=True)
+    return Response({
+        "count": paginator.page.paginator.count,
+        "total_pages": paginator.page.paginator.num_pages,
+        "current_page": paginator.page.number,
+        "page_size": paginator.get_page_size(request),
+        "from": paginator.page.start_index(),
+        "to": paginator.page.end_index(),
+        "next": paginator.get_next_link(),
+        "previous": paginator.get_previous_link(),
+        "results": serializer.data
+    })
 
 @api_view(['GET'])
 def listar_all_habitaciones(request):
     habitaciones = Habitacion.objects.all().order_by('id')
+    serializer = HabitacionSerializer(habitaciones, many=True)
+    return Response(serializer.data)
 
-    data = []
-    for habitacion in habitaciones:
-        data.append({
-            "id": habitacion.id,
-            "codigo": habitacion.codigo,
-            "area": habitacion.area,
-            "estado": habitacion.estado,
-            "admision": habitacion.admision,
-            "paciente": habitacion.paciente,
-            "nivel": habitacion.nivel
-        })
+@api_view(['GET'])
+def obtener_habitacion(request, pk):
+    habitacion = get_object_or_404(Habitacion, pk=pk)
+    serializer = HabitacionSerializer(habitacion)
+    return Response(serializer.data)
 
-    return Response(data)
+@api_view(['PUT'])
+def actualizar_habitacion(request, pk):
+    habitacion = get_object_or_404(Habitacion, pk=pk)
+    serializer = HabitacionSerializer(habitacion, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def eliminar_habitacion(request, pk):
+    habitacion = get_object_or_404(Habitacion, pk=pk)
+    habitacion.is_active = False
+    habitacion.save()
+    return Response({'mensaje': 'Habitación desactivada correctamente'}, status=status.HTTP_204_NO_CONTENT)

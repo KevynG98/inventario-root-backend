@@ -19,8 +19,7 @@ from django.urls import path, include
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from .path import (
-    userUrl, rolesUrl, productUrl, categoryUrl, inventoryUrl, 
-    inventoryMovementsUrl, customerUrl, utilsUrl,
+    inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl,
     admisionesUrl, habitacionesUrl
 )
 
@@ -34,10 +33,7 @@ urlpatterns = [
     path('rol/', include(rolesUrl)),
     path('admisiones/', include(admisionesUrl)),
     path('habitaciones/', include(habitacionesUrl)),
-    path('products/', include(productUrl)),
-    path('category/', include(categoryUrl)),
-    path('inventory/', include(inventoryUrl)),
-    path('inventory-movements/', include(inventoryMovementsUrl)),
+    path('inventario/', include(inventarioUrl)),
     # path('customer/', include(customerUrl)),
     path('utils/', include(utilsUrl)),
 ]
