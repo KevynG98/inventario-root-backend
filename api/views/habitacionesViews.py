@@ -23,7 +23,17 @@ def listar_habitaciones(request):
     resultado = paginator.paginate_queryset(habitaciones, request)
 
     serializer = HabitacionSerializer(resultado, many=True)
-    return paginator.get_paginated_response(serializer.data)
+    return Response({
+        "count": paginator.page.paginator.count,
+        "total_pages": paginator.page.paginator.num_pages,
+        "current_page": paginator.page.number,
+        "page_size": paginator.get_page_size(request),
+        "from": paginator.page.start_index(),
+        "to": paginator.page.end_index(),
+        "next": paginator.get_next_link(),
+        "previous": paginator.get_previous_link(),
+        "results": serializer.data
+    })
 
 @api_view(['GET'])
 def listar_all_habitaciones(request):
