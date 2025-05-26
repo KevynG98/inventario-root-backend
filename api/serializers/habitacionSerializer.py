@@ -7,7 +7,7 @@ from api.models.habitacionModel import (
 class HabitacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Habitacion
-        fields = ['id', 'codigo', 'area', 'estado', 'admision', 'paciente', 'nivel']
+        fields = ['id', 'codigo', 'area', 'estado', 'admision', 'paciente', 'nivel', 'observacion']
 
     def validate_admision(self, value):
         if value is not None:

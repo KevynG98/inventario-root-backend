@@ -20,7 +20,7 @@ from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from .path import (
     inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl,
-    admisionesUrl, habitacionesUrl
+    admisionesUrl, habitacionesUrl, historialApiUrl
 )
 
 def get_csrf(request):
@@ -36,4 +36,5 @@ urlpatterns = [
     path('inventario/', include(inventarioUrl)),
     # path('customer/', include(customerUrl)),
     path('utils/', include(utilsUrl)),
+    path('auditoria/', include(historialApiUrl)),
 ]
