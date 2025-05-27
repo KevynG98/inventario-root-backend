@@ -79,6 +79,14 @@ class AuditoriaMiddleware:
                         descripcion = f"Se actualizó una categoría"
                     elif path.startswith('/inventario/categorias') and metodo == 'DELETE':
                         descripcion = f"Se eliminó una categoría con ID {path.rstrip('/').split('/')[-1]}"
+                    
+                    elif path.startswith('/inventario/bodegas-crear') and metodo == 'POST':
+                        descripcion = f"Se creó una bodega '{data.get('nombre', 'N/A')}'"
+                    elif path.startswith('/inventario/bodegas-actualizar') and metodo == 'PUT':
+                        descripcion = f"Se actualizó una bodega"
+                    elif path.startswith('/inventario/bodegas-eliminar') and metodo == 'DELETE':
+                        descripcion = f"Se eliminó una bodega con ID {path.rstrip('/').split('/')[-1]}"
+
 
                 # Guardar el historial
                 HistorialAPI.objects.create(

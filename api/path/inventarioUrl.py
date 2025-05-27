@@ -29,6 +29,14 @@ from ..views.inventarioCategoriasViews import (
     obtener_categoria,
 )
 
+from ..views.inventarioBodegasViews import (
+    listar_bodegas,
+    crear_bodegas,
+    actualizar_bodegas,
+    eliminar_bodegas,
+    obtener_bodegas,
+)
+
 urlpatterns = [
     #proveedores CRUD
     path('proveedores/', listar_proveedores, name='listar_proveedores'),
@@ -57,4 +65,11 @@ urlpatterns = [
     path('categorias-actualizar/<int:pk>/', actualizar_categoria, name='actualizar_categoria'),
     path('categorias-eliminar/<int:pk>/', eliminar_categoria, name='eliminar_categoria'),
     path('categorias/<int:pk>/', obtener_categoria, name='obtener_categoria'),
+    
+    #Bodegas CRUD
+    path('bodegas/', listar_bodegas, name='listar_bodegas'),
+    path('bodegas-crear/', crear_bodegas, name='crear_bodega'),
+    path('bodegas-actualizar/<int:pk>/', actualizar_bodegas, name='actualizar_bodega'),
+    path('bodegas-eliminar/<int:pk>/', eliminar_bodegas, name='eliminar_bodega'),
+    path('bodegas/<int:pk>/', obtener_bodegas, name='obtener_bodega'),
 ]
