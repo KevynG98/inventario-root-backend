@@ -4,7 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
 from django.contrib.auth.models import User
 from ..models.rolesModel import Role
-from ..serializers.rolesSerializer import RoleSerializer
+from ..serializers.rolesSerializer import RoleSerializer, AsignarRolSerializer
+from rest_framework import status
 
 @api_view(['GET'])
 # @authentication_classes([TokenAuthentication])
@@ -49,3 +50,11 @@ def create_role(request):
         return Response({"message": f"Role '{role_name}' created successfully"}, status=201)
     else:
         return Response({"error": "Role already exists"}, status=400)
+    
+@api_view(['POST'])
+def asignar_rol(request):
+    serializer = AsignarRolSerializer(data=request.data)
+    if serializer.is_valid():
+        resultado = serializer.save()
+        return Response(resultado, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -126,6 +126,7 @@ class Admision(models.Model):
     datos_seguro = models.ForeignKey(DatosSeguro, on_delete=models.SET_NULL, null=True, blank=True)
     garantia_pago = models.ForeignKey(GarantiaPago, on_delete=models.SET_NULL, null=True, blank=True)
     area_admision = models.CharField(max_length=100, blank=True, null=True)
+    habitacion_fk = models.ForeignKey('Habitacion', on_delete=models.SET_NULL, null=True, blank=True, related_name='admisiones_asignadas')
     habitacion = models.CharField(max_length=50, blank=True, null=True)
     medico_tratante = models.CharField(max_length=100, blank=True, null=True)
     fecha = models.DateField(auto_now_add=True, blank=True, null=True)
@@ -142,17 +143,6 @@ class Admision(models.Model):
 
     def __str__(self):
         return f"Admisión de {self.paciente.primer_nombre} {self.paciente.primer_apellido} ({self.fecha})"
-
-class Habitacion(models.Model):
-    codigo = models.CharField(max_length=10)
-    area = models.CharField(max_length=100)
-    estado = models.CharField(max_length=100)
-    admision = models.IntegerField()
-    paciente = models.CharField(max_length=200, null=True, blank=True)  # solo el nombre o identificador
-    nivel = models.CharField(max_length=50)
-
-    def __str__(self):
-        return f"{self.codigo} - {self.area}"
     
 class MovimientoCuenta(models.Model):
     admision = models.ForeignKey(Admision, on_delete=models.CASCADE, related_name='movimientos')

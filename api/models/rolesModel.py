@@ -7,3 +7,11 @@ class Role(models.Model):
 
     def __str__(self):
         return self.name
+    
+class ClaveEspecial(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='clave_especial')
+    clave = models.CharField(max_length=100)
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Clave especial para {self.usuario.username}"

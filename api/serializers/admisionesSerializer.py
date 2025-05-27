@@ -3,7 +3,7 @@ from django.db.models import Max
 from ..models.admisionesModel import (
     Paciente, Acompanante, Responsable, Esposo,
     DatosLaborales, DatosSeguro, GarantiaPago, Admision,
-    Habitacion, MovimientoCuenta
+    MovimientoCuenta
 )
 
 # 🔹 Serializers simples para cada modelo
@@ -310,12 +310,6 @@ class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
         actualizar_si_existe(instance, 'medico_tratante', data, 'medicoTratante')
         instance.save()
         return instance
-    
-class HabitacionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Habitacion
-        fields = ['id', 'codigo', 'area', 'estado', 'admision', 'paciente', 'nivel']
-        
 class MovimientoCuentaSerializer(serializers.ModelSerializer):
      class Meta:
         model = MovimientoCuenta
