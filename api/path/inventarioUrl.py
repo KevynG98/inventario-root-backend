@@ -37,6 +37,11 @@ from ..views.inventarioBodegasViews import (
     obtener_bodegas,
 )
 
+from ..views.inventarioSkuView import (
+    listar_skus, crear_sku, obtener_sku, actualizar_sku, eliminar_sku,
+    mover_producto, listar_skus_con_bodegas, detalle_sku_con_bodegas
+)
+
 urlpatterns = [
     #proveedores CRUD
     path('proveedores/', listar_proveedores, name='listar_proveedores'),
@@ -72,4 +77,15 @@ urlpatterns = [
     path('bodegas-actualizar/<int:pk>/', actualizar_bodegas, name='actualizar_bodega'),
     path('bodegas-eliminar/<int:pk>/', eliminar_bodegas, name='eliminar_bodega'),
     path('bodegas/<int:pk>/', obtener_bodegas, name='obtener_bodega'),
+    
+    #Inventarios
+    path('skus/', listar_skus),
+    path('skus-crear/', crear_sku),
+    path('skus/<int:pk>/', obtener_sku),
+    path('skus-actualizar/<int:pk>/', actualizar_sku),
+    path('skus-eliminar/<int:pk>', eliminar_sku),
+    path('skus/mover/', mover_producto),
+    path('skus-con-bodegas/', listar_skus_con_bodegas),
+    path('sku-detalle/<int:pk>/', detalle_sku_con_bodegas, name='sku_con_bodegas_detalle'),
+
 ]

@@ -86,6 +86,33 @@ class AuditoriaMiddleware:
                         descripcion = f"Se actualizó una bodega"
                     elif path.startswith('/inventario/bodegas-eliminar') and metodo == 'DELETE':
                         descripcion = f"Se eliminó una bodega con ID {path.rstrip('/').split('/')[-1]}"
+                        
+                    # SKUs
+                    elif path.startswith('/inventario/skus-crear') and metodo == 'POST':
+                        descripcion = f"Se creó un SKU con código '{data.get('codigo_sku', 'N/A')}'"
+
+                    elif path.startswith('/inventario/skus-actualizar') and metodo == 'PUT':
+                        descripcion = f"Se actualizó el SKU con ID {path.rstrip('/').split('/')[-1]}"
+
+                    elif path.startswith('/inventario/skus-eliminar') and metodo == 'DELETE':
+                        descripcion = f"Se eliminó el SKU con ID {path.rstrip('/').split('/')[-1]}"
+
+                    # Movimiento de productos entre bodegas
+                    elif path.startswith('/inventario/skus/mover/') and metodo == 'POST':
+                        from api.models import InventarioSKU  # importa el modelo si no está arriba
+
+                        sku_id = data.get('sku')
+                        nombre_sku = 'N/A'
+                        try:
+                            nombre_sku = InventarioSKU.objects.get(id=sku_id).nombre
+                        except InventarioSKU.DoesNotExist:
+                            pass
+
+                        descripcion = (
+                            f"Se movieron {data.get('cantidad', 0)} unidades del producto '{nombre_sku}' "
+                            f"de '{data.get('bodega_origen', 'N/A')}' a '{data.get('bodega_destino', 'N/A')}'"
+                        )
+
 
 
                 # Guardar el historial

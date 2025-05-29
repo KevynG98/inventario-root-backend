@@ -5,6 +5,7 @@ from api.utils.pagination import CustomPageNumberPagination
 from ..models.historialApiModel import HistorialAPI
 from ..serializers.historialApiSerializer import HistorialAPISerializer
 from datetime import datetime, timedelta
+from django.db.models import Q
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -14,8 +15,16 @@ def listar_historial_api(request):
     # Filtro por módulo
     modulo = request.GET.get('modulo')
     if modulo:
-        # ejemplo: /habitaciones/
-        queryset = queryset.filter(endpoint__icontains=f'/{modulo}/')
+        queryset = queryset.filter(endpoint__icontains=modulo)
+
+    # Filtro por tipo de operación
+    tipo = request.GET.get('tipo')
+    if tipo == 'movimiento':
+        queryset = queryset.filter(
+            Q(endpoint__icontains='/skus/mover/') |
+            Q(descripcion__icontains='se movieron')
+        )
+
 
     # Filtro por fecha de inicio
     fecha_inicio = request.GET.get('fecha_inicio')
