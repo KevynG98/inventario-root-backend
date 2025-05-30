@@ -113,19 +113,18 @@ class AuditoriaMiddleware:
                             f"de '{data.get('bodega_origen', 'N/A')}' a '{data.get('bodega_destino', 'N/A')}'"
                         )
 
-
-
-                # Guardar el historial
-                HistorialAPI.objects.create(
-                    metodo=metodo,
-                    endpoint=path,
-                    usuario=usuario if usuario and usuario.is_authenticated else None,
-                    cuerpo=cuerpo.decode('utf-8') if cuerpo else '',
-                    descripcion=descripcion,
-                    exito=exito,
-                    codigo_respuesta=status_code,
-                    respuesta=respuesta
-                )
+                # Solo guardar si NO es un POST vacío
+                if not (metodo == 'POST' and not any(v for v in data.values() if str(v).strip())):
+                    HistorialAPI.objects.create(
+                        metodo=metodo,
+                        endpoint=path,
+                        usuario=usuario if usuario and usuario.is_authenticated else None,
+                        cuerpo=cuerpo.decode('utf-8') if cuerpo else '',
+                        descripcion=descripcion,
+                        exito=exito,
+                        codigo_respuesta=status_code,
+                        respuesta=respuesta
+                    )
 
         except Exception as e:
             print(f"❌ Error en AuditoriaMiddleware: {e}")
