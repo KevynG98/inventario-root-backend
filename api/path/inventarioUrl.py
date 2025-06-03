@@ -1,46 +1,12 @@
 from django.urls import path
-from ..views.inventarioProveedoresViews import (
-    listar_proveedores,
-    crear_proveedor,
-    actualizar_proveedor,
-    eliminar_proveedor,
-    obtener_proveedor,
-    eliminar_proveedor
-)
-from ..views.inventarioMarcaViews import (
-    listar_marcas,
-    crear_marca,
-    actualizar_marca,
-    eliminar_marca,
-    obtener_marca,
-)
-from ..views.inventarioMedidaViews import (
-    listar_medidas,
-    crear_medida,
-    actualizar_medida,
-    eliminar_medida,
-    obtener_medida,
-)
-from ..views.inventarioCategoriasViews import (
-    listar_categorias,
-    crear_categoria,
-    actualizar_categoria,
-    eliminar_categoria,
-    obtener_categoria,
-)
-
-from ..views.inventarioBodegasViews import (
-    listar_bodegas,
-    crear_bodegas,
-    actualizar_bodegas,
-    eliminar_bodegas,
-    obtener_bodegas,
-)
-
-from ..views.inventarioSkuView import (
-    listar_skus, crear_sku, obtener_sku, actualizar_sku, eliminar_sku,
-    mover_producto, listar_skus_con_bodegas, detalle_sku_con_bodegas
-)
+from ..views.inventarioProveedoresViews import *
+from ..views.inventarioMarcaViews import *
+from ..views.inventarioMedidaViews import *
+from ..views.inventarioCategoriasViews import *
+from ..views.inventarioBodegasViews import *
+from ..views.inventarioSkuView import *
+from ..views.inventarioSegurosView import *
+from ..views.inventarioPrecioSkuView import *
 
 urlpatterns = [
     #proveedores CRUD
@@ -87,5 +53,18 @@ urlpatterns = [
     path('skus/mover/', mover_producto),
     path('skus-con-bodegas/', listar_skus_con_bodegas),
     path('sku-detalle/<int:pk>/', detalle_sku_con_bodegas, name='sku_con_bodegas_detalle'),
+    
+    #Seguros CRUD
+    path('seguros/', listar_seguros, name='listar_seguros'),
+    path('seguros-crear/', crear_seguros, name='crear_seguros'),
+    path('seguros-actualizar/<int:pk>/', actualizar_seguros, name='actualizar_seguros'),
+    path('seguros-eliminar/<int:pk>/', eliminar_seguros, name='eliminar_seguros'),
+    path('seguros/<int:pk>/', obtener_seguros, name='obtener_seguros'),
+    
+    #Precio CRUD
+    path('precios/', listar_precios),
+    path('precios-crear/', crear_precio),
+    path('precios-actualizar/<int:pk>/', actualizar_precio),
+    path('precios-eliminar/<int:pk>/', eliminar_precio),
 
 ]

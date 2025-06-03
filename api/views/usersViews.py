@@ -19,7 +19,11 @@ def login(request):
     user.save()
     token, created = Token.objects.get_or_create(user=user)
     serializer = UserSerializer(instance=user)
-    
+
+    # ✅ Lógica de auditoría
+    request.descripcion = f"🔐 Usuario '{user.username}' inició sesión"
+    request.user = user  # Esto permite registrar el ID de usuario
+
     return Response({"token": token.key, "user": serializer.data}, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
@@ -156,3 +160,14 @@ def admin_reset_password(request, id):
     user.save()
 
     return Response({'message': 'Contraseña restablecida correctamente'}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    user = request.user
+    # Elimina el token para cerrar la sesión
+    request.user.auth_token.delete()
+    # Esto lo recogerá el middleware para registrar el cierre de sesión
+    request.descripcion = f"🚪 Usuario {user.username} cerró sesión"
+    return Response({"message": "Sesión cerrada correctamente"}, status=status.HTTP_200_OK)

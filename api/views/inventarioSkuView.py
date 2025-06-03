@@ -46,7 +46,7 @@ def actualizar_sku(request, pk):
         sku = InventarioSKU.objects.get(pk=pk)
     except InventarioSKU.DoesNotExist:
         return Response({"error": "SKU no encontrado"}, status=status.HTTP_404_NOT_FOUND)
-    serializer = InventarioSKUSerializer(sku, data=request.data)
+    serializer = InventarioSKUSerializer(sku, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
