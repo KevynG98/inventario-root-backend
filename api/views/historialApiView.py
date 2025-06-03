@@ -4,7 +4,8 @@ from rest_framework.response import Response
 from api.utils.pagination import CustomPageNumberPagination
 from ..models.historialApiModel import HistorialAPI
 from ..serializers.historialApiSerializer import HistorialAPISerializer
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.db.models import Q
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -14,8 +15,16 @@ def listar_historial_api(request):
     # Filtro por módulo
     modulo = request.GET.get('modulo')
     if modulo:
-        # ejemplo: /habitaciones/
-        queryset = queryset.filter(endpoint__icontains=f'/{modulo}/')
+        queryset = queryset.filter(endpoint__icontains=modulo)
+
+    # Filtro por tipo de operación
+    tipo = request.GET.get('tipo')
+    if tipo == 'movimiento':
+        queryset = queryset.filter(
+            Q(endpoint__icontains='/skus/mover/') |
+            Q(descripcion__icontains='se movieron')
+        )
+
 
     # Filtro por fecha de inicio
     fecha_inicio = request.GET.get('fecha_inicio')
@@ -30,8 +39,8 @@ def listar_historial_api(request):
     fecha_fin = request.GET.get('fecha_fin')
     if fecha_fin:
         try:
-            fin = datetime.strptime(fecha_fin, '%Y-%m-%d')
-            queryset = queryset.filter(fecha__date__lte=fin)
+            fin = datetime.strptime(fecha_fin, '%Y-%m-%d') + timedelta(days=1)
+            queryset = queryset.filter(fecha__lt=fin)
         except ValueError:
             return Response({'error': 'Formato de fecha_fin inválido. Use YYYY-MM-DD.'}, status=400)
 

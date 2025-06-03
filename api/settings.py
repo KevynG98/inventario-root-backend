@@ -28,13 +28,13 @@ if DEV:
 
     CSRF_TRUSTED_ORIGINS = [
         "http://localhost:3000",
-        "http://10.10.20.16:3000",
+        "http://192.168.1.18:3000"
     ]
 
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://10.10.20.16:3000",
+        "http://192.168.1.18:3000"
     ]
 
     DATABASES = {
@@ -137,7 +137,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # --- Internacionalización ---
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Guatemala'
 USE_I18N = True
 USE_TZ = True
 

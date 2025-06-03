@@ -1,33 +1,12 @@
 from django.urls import path
-from ..views.inventarioProveedoresViews import (
-    listar_proveedores,
-    crear_proveedor,
-    actualizar_proveedor,
-    eliminar_proveedor,
-    obtener_proveedor,
-    eliminar_proveedor
-)
-from ..views.inventarioMarcaViews import (
-    listar_marcas,
-    crear_marca,
-    actualizar_marca,
-    eliminar_marca,
-    obtener_marca,
-)
-from ..views.inventarioMedidaViews import (
-    listar_medidas,
-    crear_medida,
-    actualizar_medida,
-    eliminar_medida,
-    obtener_medida,
-)
-from ..views.inventarioCategoriasViews import (
-    listar_categorias,
-    crear_categoria,
-    actualizar_categoria,
-    eliminar_categoria,
-    obtener_categoria,
-)
+from ..views.inventarioProveedoresViews import *
+from ..views.inventarioMarcaViews import *
+from ..views.inventarioMedidaViews import *
+from ..views.inventarioCategoriasViews import *
+from ..views.inventarioBodegasViews import *
+from ..views.inventarioSkuView import *
+from ..views.inventarioSegurosView import *
+from ..views.inventarioPrecioSkuView import *
 
 urlpatterns = [
     #proveedores CRUD
@@ -57,4 +36,35 @@ urlpatterns = [
     path('categorias-actualizar/<int:pk>/', actualizar_categoria, name='actualizar_categoria'),
     path('categorias-eliminar/<int:pk>/', eliminar_categoria, name='eliminar_categoria'),
     path('categorias/<int:pk>/', obtener_categoria, name='obtener_categoria'),
+    
+    #Bodegas CRUD
+    path('bodegas/', listar_bodegas, name='listar_bodegas'),
+    path('bodegas-crear/', crear_bodegas, name='crear_bodega'),
+    path('bodegas-actualizar/<int:pk>/', actualizar_bodegas, name='actualizar_bodega'),
+    path('bodegas-eliminar/<int:pk>/', eliminar_bodegas, name='eliminar_bodega'),
+    path('bodegas/<int:pk>/', obtener_bodegas, name='obtener_bodega'),
+    
+    #Inventarios
+    path('skus/', listar_skus),
+    path('skus-crear/', crear_sku),
+    path('skus/<int:pk>/', obtener_sku),
+    path('skus-actualizar/<int:pk>/', actualizar_sku),
+    path('skus-eliminar/<int:pk>', eliminar_sku),
+    path('skus/mover/', mover_producto),
+    path('skus-con-bodegas/', listar_skus_con_bodegas),
+    path('sku-detalle/<int:pk>/', detalle_sku_con_bodegas, name='sku_con_bodegas_detalle'),
+    
+    #Seguros CRUD
+    path('seguros/', listar_seguros, name='listar_seguros'),
+    path('seguros-crear/', crear_seguros, name='crear_seguros'),
+    path('seguros-actualizar/<int:pk>/', actualizar_seguros, name='actualizar_seguros'),
+    path('seguros-eliminar/<int:pk>/', eliminar_seguros, name='eliminar_seguros'),
+    path('seguros/<int:pk>/', obtener_seguros, name='obtener_seguros'),
+    
+    #Precio CRUD
+    path('precios/', listar_precios),
+    path('precios-crear/', crear_precio),
+    path('precios-actualizar/<int:pk>/', actualizar_precio),
+    path('precios-eliminar/<int:pk>/', eliminar_precio),
+
 ]

@@ -7,3 +7,5 @@ from .inventarioMedidaModel import Medida
 from .inventarioProveedoresModel import Proveedor
 from .rolesModel import ClaveEspecial, Role, User
 from .historialApiModel import HistorialAPI
+from .inventarioBodegasModel import Bodegas
+from .inventariosSkuModel import InventarioSKU
