@@ -54,6 +54,7 @@ def actualizar_sku(request, pk):
 
 @api_view(['DELETE'])
 def eliminar_sku(request, pk):
+    print(f"Eliminando SKU con ID: {pk}")
     try:
         sku = InventarioSKU.objects.get(pk=pk)
     except InventarioSKU.DoesNotExist:

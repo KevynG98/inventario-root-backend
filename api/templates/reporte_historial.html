@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 9px;
+      margin: 20px;
+    }
+
+    .encabezado {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      width: 100px;
+    }
+
+    .titulo-contenedor {
+      text-align: right;
+    }
+
+    .titulo {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .subtitulo {
+      font-size: 11px;
+    }
+
+    .filtros {
+      margin-top: 10px;
+      font-size: 9px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      page-break-inside: auto;
+    }
+
+    th, td {
+      padding: 4px 6px;
+      text-align: left;
+      font-size: 9px;
+      border: none;
+    }
+
+    thead {
+      background-color: #40a4cc;
+      color: white;
+      display: table-header-group;
+    }
+
+    tr:nth-child(even) {
+      background-color: #e6f4fb; /* celeste pastel */
+    }
+
+    tr:nth-child(odd) {
+      background-color: #ffffff;
+    }
+
+    tr {
+      page-break-inside: avoid;
+    }
+
+    .nota {
+      font-size: 8px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="encabezado">
+    <img src="{{ logo_path }}" class="logo" />
+    <div class="titulo-contenedor">
+      <div class="titulo">REPORTE DE HISTORIAL DE API</div>
+      <div class="subtitulo">Generado el {{ fecha_generado }}</div>
+    </div>
+  </div>
+
+  {% if filtros %}
+    <div class="filtros">
+      <p><strong>Filtros aplicados:</strong>
+        {% for key, val in filtros.items %}
+          {{ key|capfirst }}: {{ val }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      </p>
+    </div>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Usuario</th>
+        <th>Endpoint</th>
+        <th>Método</th>
+        <th>Fecha</th>
+        <th>Descripción</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in historial %}
+        <tr>
+          <td>{{ item.usuario__username }}</td>
+          <td>{{ item.endpoint }}</td>
+          <td>{{ item.metodo }}</td>
+          <td>{{ item.fecha|date:"Y-m-d H:i" }}</td>
+          <td>{{ item.descripcion }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p class="nota">
+    <strong>NOTA:</strong> Este informe incluye todos los eventos registrados que coinciden con los filtros aplicados.
+  </p>
+</body>
+</html>
