@@ -156,3 +156,9 @@ def listar_skus_filtrados(request):
         "previous": paginator.get_previous_link(),
         "results": serializer.data
     })
+    
+@api_view(['GET'])
+def sku_listar_completo(request):
+    skus = InventarioSKU.objects.filter(is_active=True).order_by('nombre').only('id', 'codigo_sku', 'nombre')
+    data = [{"id": sku.id, "codigo_sku": sku.codigo_sku, "nombre": sku.nombre} for sku in skus]
+    return Response({"results": data})
