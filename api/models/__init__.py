@@ -9,3 +9,5 @@ from .rolesModel import ClaveEspecial, Role, User
 from .historialApiModel import HistorialAPI
 from .inventarioBodegasModel import Bodegas
 from .inventariosSkuModel import InventarioSKU
+from .directorioModel import Directorio
+from .movimientoHistoricoModel import MovimientoHistorico

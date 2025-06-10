@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reporte de Usuarios</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      margin: 40px;
+      color: #333;
+    }
+
+    .encabezado {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .logo {
+      height: 65px;
+    }
+
+    .titulo-derecha {
+      text-align: right;
+    }
+
+    .titulo-derecha h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .titulo-derecha p {
+      margin: 0;
+      font-size: 11px;
+    }
+
+    .filtros {
+      font-size: 10px;
+      margin-bottom: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 5px;
+    }
+
+    th {
+      background-color: #d9ecf2;
+      padding: 6px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    td {
+      padding: 6px;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2faff;
+    }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 9px;
+      text-align: center;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="encabezado">
+    <img src="{{ logo_path }}" alt="Logo" class="logo" />
+    <div class="titulo-derecha">
+      <h2>REPORTE DE USUARIOS</h2>
+      <p>Generado el {{ fecha_generado }}</p>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <strong>Listado completo de usuarios registrados en el sistema.</strong>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Usuario</th>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Activo</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.first_name }} {{ u.last_name }}</td>
+        <td>{{ u.email }}</td>
+        <td>{% if u.is_active %}Sí{% else %}No{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p><strong>Nota:</strong> Este informe es solo para uso administrativo del Hospital El Naranjo.</p>
+  </div>
+</body>
+</html>

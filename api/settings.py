@@ -104,6 +104,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'api.middlewares.middlewares.AuditoriaMiddleware',
+    'api.middlewares.MovimientoInventarioMiddleware.MovimientoInventarioMiddleware',
 ]
 
 # --- Configuración de URLs ---

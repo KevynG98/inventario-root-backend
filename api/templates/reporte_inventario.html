@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reporte de Inventario</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 11px;
+      margin: 40px;
+      color: #333;
+    }
+
+    .encabezado {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .logo {
+      height: 65px;
+    }
+
+    .titulo-derecha {
+      text-align: right;
+    }
+
+    .titulo-derecha h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .titulo-derecha p {
+      margin: 0;
+      font-size: 11px;
+    }
+
+    .descripcion {
+      font-size: 10px;
+      margin-bottom: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 5px;
+    }
+
+    th {
+      background-color: #d9ecf2;
+      padding: 6px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    td {
+      padding: 6px;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2faff;
+    }
+
+    .footer {
+      margin-top: 40px;
+      font-size: 9px;
+      text-align: center;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="encabezado">
+    <img src="{{ logo_path }}" alt="Logo" class="logo" />
+    <div class="titulo-derecha">
+      <h2>REPORTE DE INVENTARIO</h2>
+      <p>Generado el {{ fecha_generado }}</p>
+    </div>
+  </div>
+
+  <div class="descripcion">
+    <strong>Listado completo de productos registrados en el sistema.</strong>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Interno</th>
+        <th>Código</th>
+        <th>Nombre</th>
+        <th>Marca</th>
+        <th>Medida</th>
+        <th>Categoría</th>
+        <th>Subcategoría</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sku in skus %}
+      <tr>
+        <td>{{ sku.id }}</td>
+        <td>{{ sku.codigo }}</td>
+        <td>{{ sku.nombre }}</td>
+        <td>{{ sku.marca }}</td>
+        <td>{{ sku.medida }}</td>
+        <td>{{ sku.categoria }}</td>
+        <td>{{ sku.subcategoria }}</td>
+        <td>{{ sku.estado }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p><strong>Nota:</strong> Este informe es solo para uso administrativo del Hospital El Naranjo.</p>
+  </div>
+</body>
+</html>

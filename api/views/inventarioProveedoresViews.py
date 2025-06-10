@@ -34,15 +34,6 @@ def actualizar_proveedor(request, pk):
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['DELETE'])
-def eliminar_proveedor(request, pk):
-    try:
-        proveedor = Proveedor.objects.get(pk=pk)
-        proveedor.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-    except Proveedor.DoesNotExist:
-        return Response({'error': 'Proveedor no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-
 @api_view(['GET'])
 def obtener_proveedor(request, pk):
     try:

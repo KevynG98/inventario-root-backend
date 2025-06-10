@@ -34,6 +34,8 @@ class Proveedor(models.Model):
     regimen_contable = models.CharField(max_length=100, blank=True, null=True)
     cuenta_contable = models.CharField(max_length=100, blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    
+    cuentas_bancarias = models.JSONField(default=list, blank=True, null=True)
 
     def __str__(self):
         return self.nombre

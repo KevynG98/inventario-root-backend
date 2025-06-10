@@ -37,7 +37,7 @@ def listar_habitaciones(request):
 
 @api_view(['GET'])
 def listar_all_habitaciones(request):
-    habitaciones = Habitacion.objects.all().order_by('id')
+    habitaciones = Habitacion.objects.filter(is_active=True).order_by('area')
     serializer = HabitacionSerializer(habitaciones, many=True)
     return Response(serializer.data)
 

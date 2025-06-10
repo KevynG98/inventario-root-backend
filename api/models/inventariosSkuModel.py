@@ -1,5 +1,9 @@
 from django.db import models
 
+CLASIFICACION_CHOICES = [
+    ('consignacion', 'Consignación'),
+    ('controlado', 'Controlado'),
+]
 class InventarioSKU(models.Model):
     estado = models.CharField(max_length=12, choices=[('alta', 'Alta'), ('baja', 'Baja')], default='alta')
     categoria = models.CharField(max_length=100)
@@ -13,6 +17,7 @@ class InventarioSKU(models.Model):
     unidad_despacho = models.CharField(max_length=50)
     unidades_por_paquete = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
+    clasificacion_producto = models.CharField(max_length=20, choices=CLASIFICACION_CHOICES, blank=True, null=True)
 
 class BodegaSKU(models.Model):
     sku = models.ForeignKey(InventarioSKU, on_delete=models.CASCADE, related_name='bodegas')

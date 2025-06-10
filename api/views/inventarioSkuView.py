@@ -7,7 +7,7 @@ from ..serializers.inventarioSkuSerializer import InventarioSKUSerializer, Movim
 
 @api_view(['GET'])
 def listar_skus(request):
-    skus = InventarioSKU.objects.filter(is_active=True).all().order_by('-id')
+    skus = InventarioSKU.objects.filter(is_active=True).all().order_by('id')
     paginator = CustomPageNumberPagination()
     result_page = paginator.paginate_queryset(skus, request)
     serializer = InventarioSKUSerializer(result_page, many=True)
@@ -54,6 +54,7 @@ def actualizar_sku(request, pk):
 
 @api_view(['DELETE'])
 def eliminar_sku(request, pk):
+    print(f"Eliminando SKU con ID: {pk}")
     try:
         sku = InventarioSKU.objects.get(pk=pk)
     except InventarioSKU.DoesNotExist:
@@ -128,3 +129,36 @@ def detalle_sku_con_bodegas(request, pk):
 
     serializer = InventarioSKUSerializer(sku)
     return Response(serializer.data)
+
+@api_view(['GET'])
+def listar_skus_filtrados(request):
+    clasificacion = request.GET.get('clasificacion')
+
+    if clasificacion not in ['consignacion', 'controlado']:
+        return Response({'error': 'Clasificación inválida'}, status=400)
+
+    skus = InventarioSKU.objects.filter(
+        is_active=True,
+        clasificacion_producto=clasificacion
+    ).order_by('id')
+
+    paginator = CustomPageNumberPagination()
+    result_page = paginator.paginate_queryset(skus, request)
+    serializer = InventarioSKUSerializer(result_page, many=True)
+    return Response({
+        "count": paginator.page.paginator.count,
+        "total_pages": paginator.page.paginator.num_pages,
+        "current_page": paginator.page.number,
+        "page_size": paginator.get_page_size(request),
+        "from": paginator.page.start_index(),
+        "to": paginator.page.end_index(),
+        "next": paginator.get_next_link(),
+        "previous": paginator.get_previous_link(),
+        "results": serializer.data
+    })
+    
+@api_view(['GET'])
+def sku_listar_completo(request):
+    skus = InventarioSKU.objects.filter(is_active=True).order_by('nombre').only('id', 'codigo_sku', 'nombre')
+    data = [{"id": sku.id, "codigo_sku": sku.codigo_sku, "nombre": sku.nombre} for sku in skus]
+    return Response({"results": data})

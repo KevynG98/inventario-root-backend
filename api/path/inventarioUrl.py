@@ -49,10 +49,12 @@ urlpatterns = [
     path('skus-crear/', crear_sku),
     path('skus/<int:pk>/', obtener_sku),
     path('skus-actualizar/<int:pk>/', actualizar_sku),
-    path('skus-eliminar/<int:pk>', eliminar_sku),
+    path('skus-eliminar/<int:pk>/', eliminar_sku),
     path('skus/mover/', mover_producto),
     path('skus-con-bodegas/', listar_skus_con_bodegas),
     path('sku-detalle/<int:pk>/', detalle_sku_con_bodegas, name='sku_con_bodegas_detalle'),
+    path('skus-filtrados/', listar_skus_filtrados, name='listar_skus_filtrados'),
+    path('sku-listar/', sku_listar_completo),
     
     #Seguros CRUD
     path('seguros/', listar_seguros, name='listar_seguros'),
