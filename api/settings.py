@@ -8,9 +8,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEV = True  # <<< SOLO cambia esto a False en producción
 
 if DEV:
-    print("🌍 MODO DESARROLLO: Estás usando base de datos SQLite (Pruebas)\n")
+    print("🌍 MODO DESARROLLO: Estás usando base de datos SQL Server (hospitalpruebas)\n")
 else:
-    print("☢️ MODO PRODUCCIÓN: Estás usando base de datos MySQL\n")
+    print("☢️ MODO PRODUCCIÓN: Estás usando base de datos SQL Server (hospitalproduccion)\n")
 
 # --- Secretos y configuraciones ---
 if DEV:
@@ -39,8 +39,16 @@ if DEV:
 
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'mssql',
+            'NAME': 'hospitalpruebas',
+            'USER': 'hospital_user',
+            'PASSWORD': 'ContraseñaSegura123!',
+            'HOST': '172.25.146.246',
+            'PORT': '1433',
+            'OPTIONS': {
+                'driver': 'ODBC Driver 17 for SQL Server',
+                'trust_server_certificate': 'yes',
+            },
         }
     }
 
@@ -58,15 +66,16 @@ else:
 
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',  # <<< MySQL en producción
-            'NAME': os.getenv('DB_NAME'),
-            'USER': os.getenv('DB_USER'),
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '3306'),
+            'ENGINE': 'mssql',
+            'NAME': os.getenv('DB_PROD_NAME'),
+            'USER': os.getenv('DB_PROD_USER'),
+            'PASSWORD': os.getenv('DB_PROD_PASSWORD'),
+            'HOST': os.getenv('DB_PROD_HOST'),
+            'PORT': os.getenv('DB_PROD_PORT', '1433'),
             'OPTIONS': {
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            }
+                'driver': 'ODBC Driver 17 for SQL Server',
+                'trust_server_certificate': 'yes',
+            },
         }
     }
 
