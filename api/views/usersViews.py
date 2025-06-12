@@ -29,30 +29,15 @@ def login(request):
 @api_view(['POST'])
 def register(request):
     serializer = UserSerializer(data=request.data)
-    
+
     if serializer.is_valid():
         if User.objects.filter(username=serializer.validated_data['username']).exists():
             return Response({'error': 'El nombre de usuario ya está en uso.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = User(
-            username=serializer.validated_data['username'],
-            email=serializer.validated_data.get('email', ''),
-            first_name=serializer.validated_data.get('first_name', ''),
-            last_name=serializer.validated_data.get('last_name', ''),
-            is_active=serializer.validated_data.get('is_active', True),
-        )
+        user = serializer.save()  # ✅ Llama a create() y guarda el perfil
 
-        
-        password = serializer.validated_data.get('password', None)
-        if password:
-            user.set_password(password)
-        else:
-            user.set_unusable_password()
-
-        user.save()
-        
         token, _ = Token.objects.get_or_create(user=user)
-        
+
         return Response({
             'token': token.key,
             'user': {
@@ -67,7 +52,7 @@ def register(request):
                 'is_active': user.is_active,
             }
         }, status=status.HTTP_201_CREATED)
-    
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -78,6 +63,18 @@ def recent_users(request):
     user_data = [{'username': user.username, 'last_login': user.last_login} for user in users]
     
     return Response(user_data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def all_users_filted(request):
+    paginator = PageNumberPagination()
+    paginator.page_size = 5  # Opcional
+
+    users = User.objects.exclude(roles__name__iexact='doctor').order_by('id').prefetch_related('roles')
+
+    result_page = paginator.paginate_queryset(users, request)
+    serializer = UserSerializer(result_page, many=True)
+
+    return paginator.get_paginated_response(serializer.data)
 
 @api_view(['GET'])
 def all_users(request):
@@ -101,9 +98,15 @@ def profile(request):
 @permission_classes([IsAuthenticated])
 def delete_user(request, id):
     user = get_object_or_404(User, id=id)
-    
-    user.delete()
-    return Response({"message": "User deleted successfully"}, status=status.HTTP_200_OK)
+
+    if hasattr(user, 'perfil'):
+        user.perfil.estado = False
+        user.perfil.save()
+    user.is_active = False
+    user.save()
+
+    return Response({"message": "Usuario desactivado (soft delete)"}, status=status.HTTP_200_OK)
+
 
 @api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
@@ -120,7 +123,9 @@ def update_user(request, id):
             'user': serializer.data
         }, status=status.HTTP_200_OK)
     
+    print("❌ Errores del serializer:", serializer.errors)  # <-- agrega esta línea para depurar
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET'])
 def search_users(request):
@@ -171,3 +176,9 @@ def logout(request):
     # Esto lo recogerá el middleware para registrar el cierre de sesión
     request.descripcion = f"🚪 Usuario {user.username} cerró sesión"
     return Response({"message": "Sesión cerrada correctamente"}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def user_detail(request, id):
+    user = get_object_or_404(User, id=id)
+    serializer = UserSerializer(user)
+    return Response(serializer.data)

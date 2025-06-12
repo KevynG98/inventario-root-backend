@@ -3,6 +3,7 @@ from ..views.usersViews import *
 
 urlpatterns = [
     path('', all_users),
+    path('filter-users/', all_users_filted),
     path('login/', login),
     path('register/', register),
     path('profile/', profile),
@@ -12,4 +13,5 @@ urlpatterns = [
     path('search/', search_users),
     path('admin-reset-password/<int:id>/', admin_reset_password),
     path('logout/', logout, name='logout'),
+    path('<int:id>/', user_detail),
 ]
