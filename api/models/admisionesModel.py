@@ -11,7 +11,7 @@ class Paciente(models.Model):
     genero = models.CharField(max_length=20, blank=True, null=True)
     estado_civil = models.CharField(max_length=50, blank=True, null=True)
     fecha_nacimiento = models.DateField(blank=True, null=True)
-    edad = models.IntegerField(blank=True, null=True)
+    # edad = models.IntegerField(blank=True, null=True)
 
     tipo_identificacion = models.CharField(max_length=50, blank=True, null=True)
     numero_identificacion = models.CharField(max_length=50, blank=True, null=True)
@@ -30,16 +30,35 @@ class Paciente(models.Model):
     nombre_factura = models.CharField(max_length=150, blank=True, null=True)
     direccion_factura = models.CharField(max_length=200, blank=True, null=True)
     correo_factura = models.EmailField(blank=True, null=True)
+    
+    tipo_sangre = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return f"{self.primer_nombre} {self.primer_apellido}"
 
 class Acompanante(models.Model):
+    admision = models.ForeignKey('Admision', on_delete=models.CASCADE, related_name='acompanantes', null=True, blank=True)
+    
     nombre = models.CharField(max_length=100, blank=True, null=True)
-    telefono = models.CharField(max_length=20, blank=True, null=True)
+    tipo_identificacion = models.CharField(max_length=50, blank=True, null=True)
+    numero_identificacion = models.CharField(max_length=50, blank=True, null=True)
+    fecha_nacimiento = models.DateField(blank=True, null=True)
+    edad = models.CharField(max_length=10, blank=True, null=True)
+    genero = models.CharField(max_length=20, blank=True, null=True)
+    correo = models.EmailField(blank=True, null=True)
+    nit = models.CharField(max_length=20, blank=True, null=True)
+    tipo = models.CharField(max_length=100, blank=True, null=True)  # tipo de familiar
+    responsable_cuenta = models.BooleanField(default=False)
+    
+    direccion_laboral = models.CharField(max_length=255, blank=True, null=True)
+    telefono_empresa = models.CharField(max_length=50, blank=True, null=True)
+    
+    contacto = models.CharField(max_length=100, blank=True, null=True)
+    correo_contacto = models.EmailField(blank=True, null=True)
+    telefono_contacto = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
-        return self.nombre
+        return self.nombre or "Acompañante"
 
 class Responsable(models.Model):
     primer_nombre = models.CharField(max_length=50, blank=True, null=True)
@@ -101,6 +120,7 @@ class DatosSeguro(models.Model):
     coaseguro = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     valor_copago = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     valor_deducible = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    numero_poliza = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.aseguradora
@@ -119,31 +139,38 @@ class GarantiaPago(models.Model):
 class Admision(models.Model):
     id = models.IntegerField(primary_key=True)
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
-    acompanante = models.ForeignKey(Acompanante, on_delete=models.SET_NULL, null=True, blank=True)
+    
     responsable = models.ForeignKey(Responsable, on_delete=models.SET_NULL, null=True, blank=True)
     esposo = models.ForeignKey(Esposo, on_delete=models.SET_NULL, null=True, blank=True)
     datos_laborales = models.ForeignKey(DatosLaborales, on_delete=models.SET_NULL, null=True, blank=True)
     datos_seguro = models.ForeignKey(DatosSeguro, on_delete=models.SET_NULL, null=True, blank=True)
     garantia_pago = models.ForeignKey(GarantiaPago, on_delete=models.SET_NULL, null=True, blank=True)
+
     area_admision = models.CharField(max_length=100, blank=True, null=True)
-    habitacion_fk = models.ForeignKey('Habitacion', on_delete=models.SET_NULL, null=True, blank=True, related_name='admisiones_asignadas')
+    habitacion_fk = models.ForeignKey(
+        'Habitacion',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='admisiones_asignadas'
+    )
     habitacion = models.CharField(max_length=50, blank=True, null=True)
     medico_tratante = models.CharField(max_length=100, blank=True, null=True)
     fecha = models.DateField(auto_now_add=True, blank=True, null=True)
-    estado = models.CharField(
-    max_length=20,
-    choices=[
-        ('ingresado', 'Ingresado'),
-        ('listo_egreso', 'Listo para egreso'),
-        ('egresado', 'Egresado'),
-    ],
-    default='ingresado'
-)
 
+    estado = models.CharField(
+        max_length=20,
+        choices=[
+            ('ingresado', 'Ingresado'),
+            ('listo_egreso', 'Listo para egreso'),
+            ('egresado', 'Egresado'),
+        ],
+        default='ingresado'
+    )
 
     def __str__(self):
         return f"Admisión de {self.paciente.primer_nombre} {self.paciente.primer_apellido} ({self.fecha})"
-    
+   
 class MovimientoCuenta(models.Model):
     admision = models.ForeignKey(Admision, on_delete=models.CASCADE, related_name='movimientos')
     fecha = models.DateField(auto_now_add=True)

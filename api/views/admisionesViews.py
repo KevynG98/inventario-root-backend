@@ -86,7 +86,7 @@ def listar_admisiones_resumen(request):
         data.append({
             "id_admision": admision.id,
             "fecha_admision": admision.fecha.strftime('%d/%m/%Y'),
-            "paciente": " ".join(f"{paciente.primer_nombre} {paciente.segundo_nombre or ''} {paciente.primer_apellido} {paciente.segundo_apellido or ''} {paciente.apellido_casada or ''}".split()) + f" (Edad: {paciente.edad} NAC: {paciente.fecha_nacimiento})",
+            "paciente": " ".join(f"{paciente.primer_nombre} {paciente.segundo_nombre or ''} {paciente.primer_apellido} {paciente.segundo_apellido or ''} {paciente.apellido_casada or ''}".split()) + f" (NAC: {paciente.fecha_nacimiento})",
             "identificacion": f"{paciente.tipo_identificacion}: {paciente.numero_identificacion}",
             "genero": getattr(paciente, "genero", "N/D"),
             "aseguradora": admision.datos_seguro.aseguradora if admision.datos_seguro else "SIN SEGURO",
@@ -97,7 +97,7 @@ def listar_admisiones_resumen(request):
 
     return paginator.get_paginated_response(data)
 
-# 🔹 Editar admisión (PUT - datos anidados)
+# 🔹 Editar admisión (PUT - datos anidados) 
 @api_view(['PUT'])
 def editar_admision(request, pk):
     try:

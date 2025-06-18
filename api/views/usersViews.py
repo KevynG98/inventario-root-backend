@@ -77,6 +77,18 @@ def all_users_filted(request):
     return paginator.get_paginated_response(serializer.data)
 
 @api_view(['GET'])
+def all_doctor_users(request):
+    paginator = PageNumberPagination()
+    paginator.page_size = 5  # Opcional
+
+    users = User.objects.filter(roles__name__iexact='doctor').order_by('id')
+
+    result_page = paginator.paginate_queryset(users, request)
+    serializer = UserSerializer(result_page, many=True)
+
+    return paginator.get_paginated_response(serializer.data)
+
+@api_view(['GET'])
 def all_users(request):
     paginator = PageNumberPagination()
     paginator.page_size = 5  # 🔥 Opcional: puedes quitarlo si ya está en settings.py

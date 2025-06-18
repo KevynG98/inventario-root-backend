@@ -4,6 +4,7 @@ from ..views.usersViews import *
 urlpatterns = [
     path('', all_users),
     path('filter-users/', all_users_filted),
+    path('doctor-users/', all_doctor_users),
     path('login/', login),
     path('register/', register),
     path('profile/', profile),
