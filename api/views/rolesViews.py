@@ -58,3 +58,24 @@ def asignar_rol(request):
         resultado = serializer.save()
         return Response(resultado, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def unassign_role(request):
+    username = request.data.get('username')
+    role_name = request.data.get('role')
+
+    try:
+        user = User.objects.get(username=username)
+        role = Role.objects.get(name__iexact=role_name)
+        
+        user.roles.remove(role)
+        user.save()
+
+        return Response({'message': f'Rol {role.name} removido de {user.username}'}, status=200)
+
+    except User.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=404)
+    except Role.DoesNotExist:
+        return Response({'error': 'Rol no encontrado'}, status=404)

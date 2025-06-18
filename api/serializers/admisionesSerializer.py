@@ -46,12 +46,12 @@ class GarantiaPagoSerializer(serializers.ModelSerializer):
 # 🔹 Para detalle (GET)
 class AdmisionDetalleSerializer(serializers.ModelSerializer):
     paciente = PacienteSerializer()
-    acompanante = AcompananteSerializer()
     responsable = ResponsableSerializer()
     esposo = EsposoSerializer()
     datos_laborales = DatosLaboralesSerializer()
     datos_seguro = DatosSeguroSerializer()
     garantia_pago = GarantiaPagoSerializer()
+    acompanantes = AcompananteSerializer(many=True, read_only=True)  # ✅ ESTA LÍNEA AGREGA LOS ACOMPAÑANTES
 
     class Meta:
         model = Admision
@@ -76,7 +76,6 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
             genero=request_data.get('p_genero'),
             estado_civil=request_data.get('p_estado_civil'),
             fecha_nacimiento=request_data.get('p_fecha_nacimiento'),
-            edad=request_data.get('edad'),
             tipo_identificacion=request_data.get('p_tipo_identificacion'),
             numero_identificacion=request_data.get('p_numero_identificacion'),
             telefono=request_data.get('p_telefono'),
@@ -90,11 +89,7 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
             nombre_factura=request_data.get('nombreFactura'),
             direccion_factura=request_data.get('direccionFactura'),
             correo_factura=request_data.get('correoFactura'),
-        )
-
-        acompanante = Acompanante.objects.create(
-            nombre=request_data.get('acompananteNombre'),
-            telefono=request_data.get('acompananteTelefono')
+            tipo_sangre=request_data.get('tipo_sangre'),
         )
 
         responsable = Responsable.objects.create(
@@ -150,7 +145,8 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
             nombre_titular=request_data.get('nombreTitular'),
             coaseguro=request_data.get('coaseguro'),
             valor_copago=request_data.get('valorCopago'),
-            valor_deducible=request_data.get('valorDeducible')
+            valor_deducible=request_data.get('valorDeducible'),
+            numero_poliza=request_data.get('numero_poliza')
         )
 
         garantia_pago = GarantiaPago.objects.create(
@@ -161,16 +157,15 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
             direccion_factura=request_data.get('direccionFactura'),
             correo_factura=request_data.get('correoFactura')
         )
-        
+
         estado = validated_data.pop('estado', 'ingresado') 
-        
+
         ultimo_id = Admision.objects.aggregate(Max('id'))['id__max']
         nuevo_id = max(7000, (ultimo_id or 6999) + 1)
-        
+
         admision = Admision.objects.create(
             id=nuevo_id,
             paciente=paciente,
-            acompanante=acompanante,
             responsable=responsable,
             esposo=esposo,
             datos_laborales=datos_laborales,
@@ -180,8 +175,31 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
-        return admision
+        # Guardar acompañantes después de crear la admisión
+        acompanantes_data = request_data.get('acompanantes', [])
+        for acompanante_data in acompanantes_data:
+            if acompanante_data.get('nombre') or acompanante_data.get('telefono'):
+                Acompanante.objects.create(
+                    admision=admision,
+                    nombre=acompanante_data.get('nombre'),
+                    tipo_identificacion=acompanante_data.get('tipoIdentificacion'),
+                    numero_identificacion=acompanante_data.get('numeroIdentificacion'),
+                    fecha_nacimiento=acompanante_data.get('fechaNacimiento'),
+                    edad=acompanante_data.get('edad'),
+                    genero=acompanante_data.get('genero'),
+                    correo=acompanante_data.get('correo'),
+                    nit=acompanante_data.get('nit'),
+                    tipo=acompanante_data.get('tipo'),
+                    responsable_cuenta=acompanante_data.get('responsableCuenta', False),
+                    direccion_laboral=acompanante_data.get('direccionLaboral'),
+                    telefono_empresa=acompanante_data.get('telefonoEmpresa'),
+                    contacto=acompanante_data.get('contacto'),
+                    correo_contacto=acompanante_data.get('correoContacto'),
+                    telefono_contacto=acompanante_data.get('telefonoContacto')
+                )
 
+
+        return admision
 
 # 🔹 Para actualización (PUT) — espera datos anidados
 
@@ -221,13 +239,39 @@ class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
         actualizar_si_existe(paciente, 'nombre_factura', data, 'nombreFactura')
         actualizar_si_existe(paciente, 'direccion_factura', data, 'direccionFactura')
         actualizar_si_existe(paciente, 'correo_factura', data, 'correoFactura')
+        actualizar_si_existe(paciente, 'tipo_sangre', data, 'tipo_sangre')
         paciente.save()
 
-        # Acompañante
-        if instance.acompanante:
-            actualizar_si_existe(instance.acompanante, 'nombre', data, 'acompananteNombre')
-            actualizar_si_existe(instance.acompanante, 'telefono', data, 'acompananteTelefono')
-            instance.acompanante.save()
+        # Actualizar o reemplazar acompañantes
+        acompanantes_data = data.get('acompanantes', [])
+        if acompanantes_data:
+            instance.acompanantes.all().delete()
+
+            for acomp in acompanantes_data:
+                # Solo omitir acompañantes completamente vacíos
+                if all(not acomp.get(k) for k in ['nombre', 'numeroIdentificacion']):
+                    continue
+
+
+                Acompanante.objects.create(
+                    admision=instance,
+                    nombre=acomp.get('nombre'),
+                    tipo_identificacion=acomp.get('tipoIdentificacion'),
+                    numero_identificacion=acomp.get('numeroIdentificacion'),
+                    fecha_nacimiento=acomp.get('fechaNacimiento') or None,
+                    edad=acomp.get('edad') or "",
+                    genero=acomp.get('genero'),
+                    correo=acomp.get('correo'),
+                    nit=acomp.get('nit'),
+                    tipo=acomp.get('tipo'),
+                    responsable_cuenta=acomp.get('responsableCuenta', False),
+                    direccion_laboral=acomp.get('direccionLaboral'),
+                    telefono_empresa=acomp.get('telefonoEmpresa'),
+                    contacto=acomp.get('contacto'),
+                    correo_contacto=acomp.get('correoContacto'),
+                    telefono_contacto=acomp.get('telefonoContacto'),
+                )
+
 
         # Responsable
         if instance.responsable:
@@ -291,6 +335,8 @@ class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
             actualizar_si_existe(s, 'coaseguro', data, 'coaseguro')
             actualizar_si_existe(s, 'valor_copago', data, 'valorCopago')
             actualizar_si_existe(s, 'valor_deducible', data, 'valorDeducible')
+            actualizar_si_existe(s, 'numero_poliza', data, 'numero_poliza')
+
             s.save()
 
         # Garantía de pago
@@ -310,6 +356,7 @@ class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
         actualizar_si_existe(instance, 'medico_tratante', data, 'medicoTratante')
         instance.save()
         return instance
+
 class MovimientoCuentaSerializer(serializers.ModelSerializer):
      class Meta:
         model = MovimientoCuenta
