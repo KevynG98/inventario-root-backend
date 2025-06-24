@@ -1,10 +1,13 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from drf_yasg.utils import swagger_auto_schema
+
 from api.utils.pagination import CustomPageNumberPagination
 from ..models.inventarioMedidaModel import Medida
-from ..serializers.inventarioMedidaSerializer import MarcaSerializer
+from ..serializers.inventarioMarcaSerializer import MarcaSerializer  # 👈 CORREGIDO
 
+@swagger_auto_schema(method='get', tags=['Inventario - Medidas'], operation_description="Listar medidas activas con paginación")
 @api_view(['GET'])
 def listar_medidas(request):
     medidas = Medida.objects.filter(is_active=True).order_by('id')
@@ -13,6 +16,8 @@ def listar_medidas(request):
     serializer = MarcaSerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
 
+
+@swagger_auto_schema(method='post', tags=['Inventario - Medidas'], operation_description="Crear una nueva medida", request_body=MarcaSerializer)
 @api_view(['POST'])
 def crear_medida(request):
     serializer = MarcaSerializer(data=request.data)
@@ -21,6 +26,8 @@ def crear_medida(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@swagger_auto_schema(method='put', tags=['Inventario - Medidas'], operation_description="Actualizar una medida por ID", request_body=MarcaSerializer)
 @api_view(['PUT'])
 def actualizar_medida(request, pk):
     try:
@@ -34,6 +41,8 @@ def actualizar_medida(request, pk):
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@swagger_auto_schema(method='delete', tags=['Inventario - Medidas'], operation_description="Eliminar (soft delete) una medida por ID")
 @api_view(['DELETE'])
 def eliminar_medida(request, pk):
     try:
@@ -45,6 +54,8 @@ def eliminar_medida(request, pk):
     medida.save()
     return Response({'mensaje': 'Medida eliminada correctamente'}, status=status.HTTP_204_NO_CONTENT)
 
+
+@swagger_auto_schema(method='get', tags=['Inventario - Medidas'], operation_description="Obtener una medida por ID")
 @api_view(['GET'])
 def obtener_medida(request, pk):
     try:
