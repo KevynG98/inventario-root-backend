@@ -15,9 +15,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
+from django.shortcuts import redirect
+
+# Swagger imports
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view # type: ignore
+from drf_yasg import openapi # type: ignore
+
+# Tus imports de rutas
 from .path import (
     inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl,
     admisionesUrl, habitacionesUrl, historialApiUrl, directorioUrl
@@ -26,7 +34,21 @@ from .path import (
 def get_csrf(request):
     return JsonResponse({'csrfToken': get_token(request)})
 
+# Swagger config
+schema_view = get_schema_view(
+    openapi.Info(
+        title="API del Hospital",
+        default_version='v1',
+        description="Documentación de la API con Swagger",
+        contact=openapi.Contact(email="soporte@ejemplo.com"),
+        license=openapi.License(name="MIT License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
+
 urlpatterns = [
+    path('', lambda request: redirect('schema-swagger-ui', permanent=False)),
     path('csrf/', get_csrf, name='csrf'),
     # path('admin/', admin.site.urls),
     path('user/', include(userUrl)),
@@ -36,6 +58,11 @@ urlpatterns = [
     path('inventario/', include(inventarioUrl)),
     path('directorio-extensiones/', include(directorioUrl)),
     # path('customer/', include(customerUrl)),
-    path('utils/', include(utilsUrl)),
+    #path('utils/', include(utilsUrl)),
     path('auditoria/', include(historialApiUrl)),
+
+    # Swagger y Redoc
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
 ]
