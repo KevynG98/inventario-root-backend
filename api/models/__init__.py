@@ -1,4 +1,3 @@
-from .admisionesModel import Acompanante, Admision, DatosLaborales, DatosSeguro, Esposo, GarantiaPago, MovimientoCuenta, Paciente, Responsable
 from .customerModel import Customer
 from .habitacionModel import Habitacion
 from .inventarioCategoriasModel import CategoriaInventario
@@ -10,5 +9,4 @@ from .historialApiModel import HistorialAPI
 from .inventarioBodegasModel import Bodegas
 from .inventariosSkuModel import InventarioSKU
 from .directorioModel import Directorio
-from .movimientoHistoricoModel import MovimientoHistorico
 from .inventarioSegurosModel import Seguros

@@ -38,20 +38,16 @@ if DEV:
     ]
 
     DATABASES = {
-        'default': {
-            'ENGINE': 'mssql',
-            'NAME': 'hospitalpruebas',
-            'USER': 'hospital_user',
-            'PASSWORD': 'ContraseñaSegura123!',
-            'HOST': '172.25.146.246',
-            'PORT': '1433',
-            'OPTIONS': {
-                'driver': 'ODBC Driver 17 for SQL Server',
-                'trust_server_certificate': 'yes',
-            },
-        }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'railway',
+        'USER': 'root',
+        'PASSWORD': 'hfUufODRssZVOrAWYUXKnSCjuRSwKfJn',
+        'HOST': 'switchyard.proxy.rlwy.net',
+        'PORT': '29155',
     }
-
+}
+    
 else:
     from dotenv import load_dotenv
     load_dotenv(BASE_DIR / '.env')
@@ -110,8 +106,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'api.middlewares.middlewares.AuditoriaMiddleware',
-    'api.middlewares.MovimientoInventarioMiddleware.MovimientoInventarioMiddleware',
+    #'api.middlewares.middlewares.AuditoriaMiddleware',
+    #'api.middlewares.MovimientoInventarioMiddleware.MovimientoInventarioMiddleware',
 ]
 
 # --- Configuración de URLs ---

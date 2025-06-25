@@ -24,12 +24,6 @@ class Perfil(models.Model):
     puesto = models.CharField(max_length=100, blank=True)
     perfil_acceso = models.CharField(max_length=100, blank=True)
 
-    # Datos médicos (condicional)
-    es_medico = models.BooleanField(default=False)
-    colegiado = models.CharField(max_length=50, blank=True)
-    vencimiento_colegiado = models.DateField(null=True, blank=True)
-    especialidad = models.CharField(max_length=100, blank=True)
-
     # Datos bancarios
     banco = models.CharField(max_length=100, blank=True)
     tipo_cuenta = models.CharField(max_length=50, blank=True)

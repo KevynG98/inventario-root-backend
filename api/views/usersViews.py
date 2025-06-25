@@ -1,15 +1,21 @@
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.response import Response
-from ..serializers.userSerializaer import UserSerializer
-from django.contrib.auth.models import User
-from rest_framework.authtoken.models import Token
 from rest_framework import status
-from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
-from django.utils import timezone
 from rest_framework.pagination import PageNumberPagination
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from rest_framework.authtoken.models import Token
 
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
+from ..serializers.userSerializaer import UserSerializer
+
+
+@swagger_auto_schema(method='post', operation_summary="Iniciar sesión de usuario")
 @api_view(['POST'])
 def login(request):
     username = request.data.get("username")
@@ -29,15 +35,16 @@ def login(request):
     user.last_login = timezone.now()
     user.save()
 
-    token, created = Token.objects.get_or_create(user=user)
+    token, _ = Token.objects.get_or_create(user=user)
     serializer = UserSerializer(instance=user)
 
-    # ✅ Lógica de auditoría
     request.descripcion = f"🔐 Usuario '{user.username}' inició sesión"
     request.user = user
 
     return Response({"token": token.key, "user": serializer.data}, status=status.HTTP_200_OK)
 
+
+@swagger_auto_schema(method='post', request_body=UserSerializer, operation_summary="Registrar nuevo usuario")
 @api_view(['POST'])
 def register(request):
     serializer = UserSerializer(data=request.data)
@@ -46,8 +53,7 @@ def register(request):
         if User.objects.filter(username=serializer.validated_data['username']).exists():
             return Response({'error': 'El nombre de usuario ya está en uso.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = serializer.save()  # ✅ Llama a create() y guarda el perfil
-
+        user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)
 
         return Response({
@@ -68,95 +74,92 @@ def register(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(method='get', operation_summary="Listar usuarios más recientes")
 @api_view(['GET'])
 def recent_users(request):
-    # Obtener los 5 usuarios más recientes por fecha de último inicio de sesión
     users = User.objects.all().order_by('-last_login')[:5]
     user_data = [{'username': user.username, 'last_login': user.last_login} for user in users]
-    
     return Response(user_data, status=status.HTTP_200_OK)
 
+
+@swagger_auto_schema(method='get', operation_summary="Listar usuarios sin rol 'doctor'")
 @api_view(['GET'])
 def all_users_filted(request):
     paginator = PageNumberPagination()
-    paginator.page_size = 5  # Opcional
-
+    paginator.page_size = 5
     users = User.objects.exclude(roles__name__iexact='doctor').order_by('id').prefetch_related('roles')
-
     result_page = paginator.paginate_queryset(users, request)
     serializer = UserSerializer(result_page, many=True)
-
     return paginator.get_paginated_response(serializer.data)
 
+
+@swagger_auto_schema(method='get', operation_summary="Listar usuarios con rol 'doctor'")
 @api_view(['GET'])
 def all_doctor_users(request):
     paginator = PageNumberPagination()
-    paginator.page_size = 5  # Opcional
-
+    paginator.page_size = 5
     users = User.objects.filter(roles__name__iexact='doctor').order_by('id')
-
     result_page = paginator.paginate_queryset(users, request)
     serializer = UserSerializer(result_page, many=True)
-
     return paginator.get_paginated_response(serializer.data)
 
+
+@swagger_auto_schema(method='get', operation_summary="Listar todos los usuarios")
 @api_view(['GET'])
 def all_users(request):
     paginator = PageNumberPagination()
-    paginator.page_size = 5  # 🔥 Opcional: puedes quitarlo si ya está en settings.py
-
+    paginator.page_size = 5
     users = User.objects.all().order_by('id')
     result_page = paginator.paginate_queryset(users, request)
     serializer = UserSerializer(result_page, many=True)
-
     return paginator.get_paginated_response(serializer.data)
 
+
+@swagger_auto_schema(method='get', operation_summary="Perfil del usuario autenticado")
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def profile(request):
     return Response({"message": f"You are logged in as: {request.user.username}"})
 
+
+@swagger_auto_schema(method='delete', operation_summary="Eliminar (soft delete) usuario por ID")
 @api_view(['DELETE'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def delete_user(request, id):
     user = get_object_or_404(User, id=id)
-
     if hasattr(user, 'perfil'):
         user.perfil.estado = False
         user.perfil.save()
     user.is_active = False
     user.save()
-
     return Response({"message": "Usuario desactivado (soft delete)"}, status=status.HTTP_200_OK)
 
 
+@swagger_auto_schema(method='put', request_body=UserSerializer, operation_summary="Actualizar usuario por ID")
 @api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def update_user(request, id):
     user = get_object_or_404(User, id=id)
-
     serializer = UserSerializer(user, data=request.data, partial=True)
-
     if serializer.is_valid():
         serializer.save()
         return Response({
             'message': 'Usuario actualizado correctamente',
             'user': serializer.data
         }, status=status.HTTP_200_OK)
-    
-    print("❌ Errores del serializer:", serializer.errors)  # <-- agrega esta línea para depurar
+    print("❌ Errores del serializer:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(method='get', operation_summary="Buscar usuarios por texto (username, nombre, email...)")
 @api_view(['GET'])
 def search_users(request):
     search_query = request.GET.get('q', '')
     paginator = PageNumberPagination()
-    paginator.page_size = 5  # Mismo tamaño que usas para paginación
-
+    paginator.page_size = 5
     users = User.objects.filter(
         username__icontains=search_query
     ) | User.objects.filter(
@@ -166,41 +169,38 @@ def search_users(request):
     ) | User.objects.filter(
         email__icontains=search_query
     )
-
     users = users.order_by('id').distinct()
-
     result_page = paginator.paginate_queryset(users, request)
     serializer = UserSerializer(result_page, many=True)
-
     return paginator.get_paginated_response(serializer.data)
 
+
+@swagger_auto_schema(method='post', operation_summary="Admin: restablecer contraseña de usuario")
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def admin_reset_password(request, id):
     user = get_object_or_404(User, id=id)
-
     new_password = request.data.get('password')
-
     if not new_password:
         return Response({'error': 'La nueva contraseña es requerida'}, status=status.HTTP_400_BAD_REQUEST)
-
     user.set_password(new_password)
     user.save()
-
     return Response({'message': 'Contraseña restablecida correctamente'}, status=status.HTTP_200_OK)
 
+
+@swagger_auto_schema(method='post', operation_summary="Cerrar sesión del usuario actual")
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def logout(request):
     user = request.user
-    # Elimina el token para cerrar la sesión
     request.user.auth_token.delete()
-    # Esto lo recogerá el middleware para registrar el cierre de sesión
     request.descripcion = f"🚪 Usuario {user.username} cerró sesión"
     return Response({"message": "Sesión cerrada correctamente"}, status=status.HTTP_200_OK)
 
+
+@swagger_auto_schema(method='get', operation_summary="Detalle de usuario por ID")
 @api_view(['GET'])
 def user_detail(request, id):
     user = get_object_or_404(User, id=id)

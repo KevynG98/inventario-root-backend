@@ -27,8 +27,8 @@ from drf_yasg import openapi # type: ignore
 
 # Tus imports de rutas
 from .path import (
-    inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl,
-    admisionesUrl, habitacionesUrl, historialApiUrl, directorioUrl
+    inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl, 
+    habitacionesUrl, directorioUrl
 )
 
 def get_csrf(request):
@@ -37,7 +37,7 @@ def get_csrf(request):
 # Swagger config
 schema_view = get_schema_view(
     openapi.Info(
-        title="API del Hospital",
+        title="API del Inventario general",
         default_version='v1',
         description="Documentación de la API con Swagger",
         contact=openapi.Contact(email="soporte@ejemplo.com"),
@@ -53,13 +53,13 @@ urlpatterns = [
     # path('admin/', admin.site.urls),
     path('user/', include(userUrl)),
     path('rol/', include(rolesUrl)),
-    path('admisiones/', include(admisionesUrl)),
+    #path('admisiones/', include(admisionesUrl)),
     path('habitaciones/', include(habitacionesUrl)),
     path('inventario/', include(inventarioUrl)),
     path('directorio-extensiones/', include(directorioUrl)),
     # path('customer/', include(customerUrl)),
     #path('utils/', include(utilsUrl)),
-    path('auditoria/', include(historialApiUrl)),
+    #path('auditoria/', include(historialApiUrl)),
 
     # Swagger y Redoc
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
