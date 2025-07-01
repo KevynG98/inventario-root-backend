@@ -26,7 +26,7 @@ class Proveedor(models.Model):
     observaciones = models.TextField(blank=True, null=True)
 
     tipo = models.CharField(max_length=20, blank=True, null=True)
-    dias_credito = models.IntegerField(default=0)
+    dias_credito = models.IntegerField(null=True, blank=True, default=0)
     local_extranjero = models.CharField(max_length=10, choices=LOCALIDAD_CHOICES, default='local')
     pais = models.CharField(max_length=50, default='Guatemala')
     moneda = models.CharField(max_length=50, default='GTQ - QUETZALES')
