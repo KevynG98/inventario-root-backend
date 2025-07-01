@@ -48,6 +48,23 @@ def obtener_sku(request, pk):
     serializer = InventarioSKUSerializer(sku)
     return Response(serializer.data)
 
+@swagger_auto_schema(method='get', operation_summary="Obtener SKU por Barcode", tags=["inventario-sku"])
+@api_view(['GET'])
+def obtener_sku_barcode(request):
+    """
+    Retorna los datos de un SKU específico por su código de barras.
+    """
+    barcode = request.GET.get('codigo_sku')  # el frontend manda esto como ?codigo_sku=...
+    if not barcode:
+        return Response({"error": "Se requiere el código de barras"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        sku = InventarioSKU.objects.get(barcode=barcode)  # corregido aquí
+    except InventarioSKU.DoesNotExist:
+        return Response({"error": "SKU no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = InventarioSKUSerializer(sku)
+    return Response(serializer.data)
 
 @swagger_auto_schema(method='put', request_body=InventarioSKUSerializer, operation_summary="Actualizar SKU", tags=["inventario-sku"])
 @api_view(['PUT'])

@@ -48,6 +48,7 @@ urlpatterns = [
     path('skus/', listar_skus),
     path('skus-crear/', crear_sku),
     path('skus/<int:pk>/', obtener_sku),
+    path('skus-buscar/', obtener_sku_barcode),
     path('skus-actualizar/<int:pk>/', actualizar_sku),
     path('skus-eliminar/<int:pk>/', eliminar_sku),
     path('skus/mover/', mover_producto),

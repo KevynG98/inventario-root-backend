@@ -5,7 +5,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 from api.utils.pagination import CustomPageNumberPagination
 from ..models.inventarioMedidaModel import Medida
-from ..serializers.inventarioMarcaSerializer import MarcaSerializer  # 👈 CORREGIDO
+from ..serializers.inventarioMedidaSerializer import MarcaSerializer # 👈 CORREGIDO
 
 @swagger_auto_schema(method='get', tags=['Inventario - Medidas'], operation_description="Listar medidas activas con paginación")
 @api_view(['GET'])
