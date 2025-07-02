@@ -89,6 +89,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'drf_yasg',  # 👈 AGREGA ESTA LÍNEA
     'api.apps.ApiConfig',
 ]
 

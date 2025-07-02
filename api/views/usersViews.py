@@ -12,17 +12,29 @@ from rest_framework.pagination import PageNumberPagination
 
 @api_view(['POST'])
 def login(request):
-    user = get_object_or_404(User, username=request.data.get("username"))
-    if not user.check_password(request.data.get("password")):
-        return Response({"error": "Invalid password"}, status=status.HTTP_401_UNAUTHORIZED)
+    username = request.data.get("username")
+    password = request.data.get("password")
+
+    if not username or not password:
+        return Response({"error": "Username and password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if not user.check_password(password):
+        return Response({"error": "Incorrect password."}, status=status.HTTP_401_UNAUTHORIZED)
+
     user.last_login = timezone.now()
     user.save()
+
     token, created = Token.objects.get_or_create(user=user)
     serializer = UserSerializer(instance=user)
 
     # ✅ Lógica de auditoría
     request.descripcion = f"🔐 Usuario '{user.username}' inició sesión"
-    request.user = user  # Esto permite registrar el ID de usuario
+    request.user = user
 
     return Response({"token": token.key, "user": serializer.data}, status=status.HTTP_200_OK)
 

@@ -12,12 +12,13 @@ class InventarioSKU(models.Model):
     principio_activo = models.CharField(max_length=100)
     nombre = models.CharField(max_length=200)
     codigo_sku = models.CharField(max_length=100, unique=True)
-    descripcion_estado_cuenta = models.TextField(blank=True, null=True)
+    #descripcion_estado_cuenta = models.TextField(blank=True, null=True)
     unidad_compra = models.CharField(max_length=50)
     unidad_despacho = models.CharField(max_length=50)
     unidades_por_paquete = models.PositiveIntegerField(default=1)
     is_active = models.BooleanField(default=True)
     clasificacion_producto = models.CharField(max_length=20, choices=CLASIFICACION_CHOICES, blank=True, null=True)
+    barcode = models.CharField(max_length=100, blank=True, null=True)
 
 class BodegaSKU(models.Model):
     sku = models.ForeignKey(InventarioSKU, on_delete=models.CASCADE, related_name='bodegas')

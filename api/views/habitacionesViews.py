@@ -18,7 +18,7 @@ def crear_habitacion(request):
 
 @api_view(['GET'])
 def listar_habitaciones(request):
-    habitaciones = Habitacion.objects.filter(is_active=True).order_by('area')
+    habitaciones = Habitacion.objects.filter(is_active=True).order_by('area', 'codigo')
     paginator = CustomPageNumberPagination()
     resultado = paginator.paginate_queryset(habitaciones, request)
 
