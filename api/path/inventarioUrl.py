@@ -7,6 +7,7 @@ from ..views.inventarioBodegasViews import *
 from ..views.inventarioSkuView import *
 from ..views.inventarioSegurosView import *
 from ..views.inventarioPrecioSkuView import *
+from ..views.cajeroViews import *
 
 urlpatterns = [
     #proveedores CRUD
@@ -56,6 +57,10 @@ urlpatterns = [
     path('sku-detalle/<int:pk>/', detalle_sku_con_bodegas, name='sku_con_bodegas_detalle'),
     path('skus-filtrados/', listar_skus_filtrados, name='listar_skus_filtrados'),
     path('sku-listar/', sku_listar_completo),
+    
+    path('cajeros/', listar_cajeros, name='listar-cajeros'),
+    path('cajeros/crear/', crear_cajero, name='crear-cajero'),
+    path('cajeros/<str:clave>/', obtener_cajero_por_clave, name='obtener-cajero'),
     
     #Seguros CRUD
     path('seguros/', listar_seguros, name='listar_seguros'),
