@@ -28,7 +28,8 @@ from drf_yasg import openapi # type: ignore
 # Tus imports de rutas
 from .path import (
     inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl,
-    admisionesUrl, habitacionesUrl, historialApiUrl, directorioUrl
+    admisionesUrl, habitacionesUrl, historialApiUrl, directorioUrl,
+    requisisionesUrl
 )
 
 def get_csrf(request):
@@ -57,6 +58,7 @@ urlpatterns = [
     path('habitaciones/', include(habitacionesUrl)),
     path('inventario/', include(inventarioUrl)),
     path('directorio-extensiones/', include(directorioUrl)),
+    path('requisisiones/', include(requisisionesUrl)),
     # path('customer/', include(customerUrl)),
     #path('utils/', include(utilsUrl)),
     path('auditoria/', include(historialApiUrl)),
