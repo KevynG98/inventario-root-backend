@@ -11,3 +11,11 @@ class CategoriaInventario(models.Model):
 
     def __str__(self):
         return self.nombre
+    
+class SubcategoriaInventario(models.Model):
+    nombre = models.TextField()
+    categoria = models.ForeignKey(CategoriaInventario, related_name='subcategorias', on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.nombre
