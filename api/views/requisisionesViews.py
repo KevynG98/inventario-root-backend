@@ -34,13 +34,18 @@ def guardar_requisicion(request):
 # @authentication_classes([TokenAuthentication])
 # @permission_classes([IsAuthenticated])
 def listar_requisiciones(request):
-    """
-    Devuelve la lista de todas las requisiciones.
-    """
-    queryset = Requisicion.objects.all().order_by('-created_at')
-    serializer = RequisicionSerializer(queryset, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    estado = request.GET.get('estado')  # puede ser 'aprobada', 'pendiente', etc.
+    excluir = request.GET.get('excluir')
 
+    queryset = Requisicion.objects.all()
+
+    if estado:
+        queryset = queryset.filter(estado=estado)
+    elif excluir:
+        queryset = queryset.exclude(estado=excluir)
+
+    serializer = RequisicionSerializer(queryset, many=True)
+    return Response(serializer.data)
 
 @api_view(['PATCH'])
 @authentication_classes([TokenAuthentication])
