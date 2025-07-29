@@ -36,6 +36,8 @@ urlpatterns = [
     path('categorias-actualizar/<int:pk>/', actualizar_categoria, name='actualizar_categoria'),
     path('categorias-eliminar/<int:pk>/', eliminar_categoria, name='eliminar_categoria'),
     path('categorias/<int:pk>/', obtener_categoria, name='obtener_categoria'),
+    path('categorias/subcategorias/<int:categoria_id>/', listar_subcategorias_por_categoria, name='listar_subcategorias_por_categoria'),
+    path('subcategorias-crear/', crear_subcategoria, name='crear_subcategoria'),
     
     #Bodegas CRUD
     path('bodegas/', listar_bodegas, name='listar_bodegas'),
