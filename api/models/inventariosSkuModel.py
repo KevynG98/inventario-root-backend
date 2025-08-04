@@ -19,6 +19,7 @@ class InventarioSKU(models.Model):
     is_active = models.BooleanField(default=True)
     clasificacion_producto = models.CharField(max_length=20, choices=CLASIFICACION_CHOICES, blank=True, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
+    iva = models.CharField(max_length=100, blank=True, null=True)
 
 class BodegaSKU(models.Model):
     sku = models.ForeignKey(InventarioSKU, on_delete=models.CASCADE, related_name='bodegas')
