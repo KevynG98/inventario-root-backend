@@ -11,7 +11,7 @@ from rest_framework import status
 # @authentication_classes([TokenAuthentication])
 # @permission_classes([IsAuthenticated])
 def list_roles(request):
-    roles = Role.objects.all()
+    roles = Role.objects.all().order_by('id')
     serializer = RoleSerializer(roles, many=True)
     return Response(serializer.data)
 
