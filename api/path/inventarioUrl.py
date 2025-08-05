@@ -7,6 +7,7 @@ from ..views.inventarioBodegasViews import *
 from ..views.inventarioSkuView import *
 from ..views.inventarioSegurosView import *
 from ..views.inventarioPrecioSkuView import *
+from ..views.inventarioPrincipiosView import *
 
 urlpatterns = [
     #proveedores CRUD
@@ -70,5 +71,11 @@ urlpatterns = [
     path('precios-crear/', crear_precio),
     path('precios-actualizar/<int:pk>/', actualizar_precio),
     path('precios-eliminar/<int:pk>/', eliminar_precio),
-
+    
+    #Principios Activos CRUD
+    path('principios/', listar_principios, name='listar_principios'),
+    path('principios-crear/', crear_principios, name='crear_principios'),
+    path('principios-actualizar/<int:pk>/', actualizar_principios, name='actualizar_principios'),
+    path('principios-eliminar/<int:pk>/', eliminar_principios, name='eliminar_principios'),
+    path('principios/<int:pk>/', obtener_principios, name='obtener_principios'),
 ]
