@@ -29,7 +29,7 @@ from drf_yasg import openapi # type: ignore
 from .path import (
     inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl,
     admisionesUrl, habitacionesUrl, historialApiUrl, directorioUrl,
-    requisisionesUrl
+    requisisionesUrl, mantenimientoUrl
 )
 
 def get_csrf(request):
@@ -61,6 +61,7 @@ urlpatterns = [
     path('requisisiones/', include(requisisionesUrl)),
     # path('customer/', include(customerUrl)),
     #path('utils/', include(utilsUrl)),
+    path('mantenimiento/', include(mantenimientoUrl)),
     path('auditoria/', include(historialApiUrl)),
 
     # Swagger y Redoc

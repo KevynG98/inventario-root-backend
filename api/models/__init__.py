@@ -12,3 +12,4 @@ from .inventariosSkuModel import InventarioSKU
 from .directorioModel import Directorio
 from .movimientoHistoricoModel import MovimientoHistorico
 from .inventarioSegurosModel import Seguros
+from .mantenimientoModel import CentroCosto, Departamento, CuentaContable
