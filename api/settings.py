@@ -48,8 +48,9 @@ if DEV:
             'HOST': '172.25.146.246',
             'PORT': '1433',
             'OPTIONS': {
-                'driver': 'ODBC Driver 17 for SQL Server',
-                'trust_server_certificate': 'yes',
+                'driver': os.getenv('SQL_ODBC_DRIVER', 'ODBC Driver 18 for SQL Server'),
+                # Con Driver 18: cifra y confía en el cert del servidor (self-signed)
+                'extra_params': 'Encrypt=yes;TrustServerCertificate=yes;',
             },
         }
     }

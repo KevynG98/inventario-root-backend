@@ -29,10 +29,9 @@ def crear_sku(request):
     Crea un nuevo SKU con los datos proporcionados.
     """
     serializer = InventarioSKUSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer.is_valid(raise_exception=True)  # <- si falla, DRF responde 400 con el JSON de errores
+    serializer.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 @swagger_auto_schema(method='get', operation_summary="Obtener SKU por ID", tags=["inventario-sku"])

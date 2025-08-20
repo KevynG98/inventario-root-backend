@@ -3,6 +3,7 @@ from django.db import models
 CLASIFICACION_CHOICES = [
     ('consignacion', 'Consignación'),
     ('controlado', 'Controlado'),
+    ('normal', 'Normal'),
 ]
 class InventarioSKU(models.Model):
     estado = models.CharField(max_length=12, choices=[('alta', 'Alta'), ('baja', 'Baja')], default='alta')
