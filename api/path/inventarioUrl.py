@@ -71,6 +71,7 @@ urlpatterns = [
     path('precios-crear/', crear_precio),
     path('precios-actualizar/<int:pk>/', actualizar_precio),
     path('precios-eliminar/<int:pk>/', eliminar_precio),
+    path('precios/buscar/', buscar_precios, name='buscar_precios'),
     
     #Principios Activos CRUD
     path('principios/', listar_principios, name='listar_principios'),

@@ -4,6 +4,7 @@ CLASIFICACION_CHOICES = [
     ('consignacion', 'Consignación'),
     ('controlado', 'Controlado'),
     ('normal', 'Normal'),
+    ('amor', 'Amor'),
 ]
 class InventarioSKU(models.Model):
     estado = models.CharField(max_length=12, choices=[('alta', 'Alta'), ('baja', 'Baja')], default='alta')
@@ -21,6 +22,7 @@ class InventarioSKU(models.Model):
     clasificacion_producto = models.CharField(max_length=20, choices=CLASIFICACION_CHOICES, blank=True, null=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
     iva = models.CharField(max_length=100, blank=True, null=True)
+    proveedor = models.CharField(max_length=100, blank=True, null=True)
 
 class BodegaSKU(models.Model):
     sku = models.ForeignKey(InventarioSKU, on_delete=models.CASCADE, related_name='bodegas')
