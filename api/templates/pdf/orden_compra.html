@@ -1,0 +1,292 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Orden de Compra {{ orden.numero }}</title>
+  <style>
+    /* ================= Paleta (ajusta libremente) ================= */
+    :root{
+      --primary-800:#1F4E79;  /* Azul institucional */
+      --primary-600:#2C6AA8;
+      --primary-100:#E8F2FF;
+
+      --ink:#222;
+      --muted:#5f6b7a;
+      --border:#DDE5EE;
+      --soft:#F7FAFF;
+
+      --success:#2E7D32; /* Aprobada */
+      --warning:#EF6C00; /* Pendiente */
+      --danger:#C62828;  /* Anulada */
+
+      --table-head-bg:var(--primary-100);
+      --table-head-fg:var(--primary-800);
+      --row-alt:#fbfdff;
+      --subtotal-bg:#F4F7FB;
+    }
+
+    /* ================= Página ================= */
+    @page{ size:A4; margin: 12mm 12mm 14mm 12mm; }
+    *{ box-sizing:border-box; }
+    html, body{ color:var(--ink); font-family: Arial, Helvetica, sans-serif; font-size:12px; }
+    .page{ position:relative; z-index:2; }
+
+    /* Marca de agua si está ANULADA */
+    body.estado-anulada::before{
+      content:"ANULADA";
+      position:fixed;
+      top:40%;
+      left:10%;
+      font-size:120px;
+      color: rgba(198,40,40,0.12);
+      transform: rotate(-18deg);
+      z-index:1;
+      white-space:nowrap;
+      pointer-events:none;
+    }
+
+    /* ================= Layout utilitario ================= */
+    .row{ display:flex; gap:12px; align-items:flex-start; }
+    .col{ flex:1 1 0; }
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    .mt-2{ margin-top:8px; } .mt-4{ margin-top:16px; } .mt-6{ margin-top:24px; }
+    .mb-2{ margin-bottom:8px; } .mb-4{ margin-bottom:16px; }
+    .py-2{ padding-top:8px; padding-bottom:8px; }
+    .center{text-align:center;} .right{text-align:right;}
+    .muted{ color:var(--muted); }
+    .small{ font-size:11px; }
+
+    /* ================= Encabezado ================= */
+    .brandbar{
+      background: linear-gradient(0deg, var(--primary-800), var(--primary-600));
+      padding:10px 12px;
+      border-radius:10px;
+      color:#fff;
+      margin-bottom:10px;
+    }
+    .brandtop{ display:flex; align-items:center; justify-content:space-between; }
+    .title{ font-size:22px; font-weight:800; letter-spacing:.4px; }
+    .folio{ font-weight:700; }
+    .meta{ opacity:.9; }
+
+    .chip{
+      display:inline-block; padding:3px 10px; border-radius:14px; font-size:11px;
+      border:1px solid rgba(255,255,255,.6); background: rgba(255,255,255,.15); color:#fff; font-weight:700;
+    }
+    .chip.estado{ border:none; }
+    .chip.aprobada{ background: rgba(46,125,50,.18); color:#e9ffea; border:1px solid rgba(46,125,50,.35); }
+    .chip.pendiente{ background: rgba(239,108,0,.18); color:#fff4e6; border:1px solid rgba(239,108,0,.35); }
+    .chip.anulada{ background: rgba(198,40,40,.18); color:#ffe9e9; border:1px solid rgba(198,40,40,.35); }
+
+    /* ================= Tarjetas / cajas ================= */
+    .card{
+      border:1px solid var(--border);
+      border-radius:8px; padding:10px; background:#fff;
+    }
+    .subtitle{ font-weight:700; font-size:13px; margin-bottom:4px; color:var(--primary-800); }
+    .kv{ display:grid; grid-template-columns: 150px 1fr; gap:6px 10px; }
+    .kv .k{ color:#4d5a69; }
+
+    /* ================= Tablas ================= */
+    table{ width:100%; border-collapse:collapse; background:#fff; }
+    th, td{ border:1px solid var(--border); padding:6px 8px; vertical-align:top; }
+    th{
+      background:var(--table-head-bg);
+      color:var(--table-head-fg);
+      font-weight:700;
+    }
+    tbody tr:nth-child(even) td{ background:var(--row-alt); }
+
+    /* Totales */
+    .totals{ width:340px; margin-left:auto; border:none; }
+    .totals td{ border:none; padding:6px 0; }
+    .totals .lbl{ color:#334155; }
+    .totals .grand{
+      background: var(--subtotal-bg);
+      border-top: 2px solid var(--primary-800);
+      border-bottom: 1px solid var(--border);
+      padding:8px;
+      font-weight:800;
+    }
+
+    /* ================= Nota y firmas ================= */
+    .note{
+      font-size:11px; color:#334155; line-height:1.42;
+      background: #FFFBEA; border:1px dashed #F5D48A; border-radius:8px; padding:10px;
+      white-space:pre-line;
+    }
+    .signs{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:18px; margin-top:16px; }
+    .sign{ text-align:center; padding-top:40px; }
+    .sign .line{
+      border-top:1px solid #333; margin-top:34px; padding-top:6px; font-weight:700;
+    }
+
+    /* ================= Pie ================= */
+    .footer{
+      color:var(--muted); font-size:11px; margin-top:14px;
+      border-top:1px solid var(--border); padding-top:6px;
+    }
+  </style>
+</head>
+
+<!-- agrega clase dinámica para watermark: estado-{{ ... }} -->
+<body class="estado-{{ orden.estado|lower }}">
+<div class="page">
+
+  <!-- Barra de marca -->
+  <div class="brandbar">
+    <div class="brandtop">
+      <div>
+        <div class="title">ORDEN DE COMPRA</div>
+        <div class="meta">Impreso por: {{ orden.impreso_por }} • {{ orden.fecha_impresion|date:"Y-m-d H:i:s" }}</div>
+      </div>
+      <div class="right">
+        <div class="folio">No: {{ orden.numero }}</div>
+        <div class="meta">Fecha: {{ orden.fecha|date:"Y-m-d" }}</div>
+        <div class="chip estado {% if orden.estado|lower == 'aprobada' %}aprobada{% elif orden.estado|lower == 'pendiente' %}pendiente{% elif orden.estado|lower == 'anulada' %}anulada{% endif %}">
+          Estado: {{ orden.estado }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Proveedor / Facturar a -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="subtitle">Datos del Proveedor</div>
+      <div class="kv">
+        <div class="k">Nombre:</div><div>{{ orden.proveedor.nombre }}</div>
+        <div class="k">Dirección:</div><div>{{ orden.proveedor.direccion }}</div>
+        <div class="k">NIT:</div><div>{{ orden.proveedor.nit }}</div>
+        <div class="k">Contacto:</div><div>{{ orden.proveedor.contacto }}</div>
+        <div class="k">Correo:</div><div>{{ orden.proveedor.correo }}</div>
+        <div class="k">Tel./Cel:</div><div>{{ orden.proveedor.telefono }}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="subtitle">Facturar a</div>
+      <div class="kv">
+        <div class="k">Nombre:</div><div>{{ orden.facturar_a.nombre }}</div>
+        <div class="k">Dirección:</div><div>{{ orden.facturar_a.direccion }}</div>
+        <div class="k">NIT:</div><div>{{ orden.facturar_a.nit }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Condiciones -->
+  <div class="card mt-4">
+    <div class="grid-3">
+      <div>
+        <div class="subtitle">Forma de Pago</div>
+        <div>{{ orden.forma_pago }}</div>
+      </div>
+      <div>
+        <div class="subtitle">Días de Crédito</div>
+        <div>{{ orden.dias_credito }}</div>
+      </div>
+      <div>
+        <div class="subtitle">Forma de Entrega</div>
+        <div>{{ orden.forma_entrega }}</div>
+      </div>
+    </div>
+    <div class="mt-4">
+      <div class="subtitle">Tiempo de Entrega</div>
+      <div>{{ orden.tiempo_entrega }}</div>
+    </div>
+    <div class="mt-4 small muted">
+      Esta Orden de Compra debe llevar adjuntas 2 o 3 cotizaciones como respaldo de la elección de proveedor.
+    </div>
+  </div>
+
+  <!-- Detalle de Ítems -->
+  <div class="mt-6">
+    <table>
+      <thead>
+        <tr>
+          <th class="center" style="width:40px;">No.</th>
+          <th style="width:110px;">Código SKU</th>
+          <th>Descripción</th>
+          <th class="center" style="width:70px;">Cantidad</th>
+          <th class="center" style="width:90px;">Unidad</th>
+          <th class="right" style="width:100px;">Precio S/IVA</th>
+          <th class="right" style="width:80px;">IVA</th>
+          <th class="right" style="width:110px;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in orden.items %}
+        <tr>
+          <td class="center">{{ forloop.counter|stringformat:"04d" }}</td>
+          <td>{{ item.codigo_sku }}</td>
+          <td>{{ item.descripcion }}</td>
+          <td class="center">{{ item.cantidad }}</td>
+          <td class="center">{{ item.unidad_medida }}</td>
+          <td class="right">Q {{ item.precio_sin_iva|floatformat:2 }}</td>
+          <td class="right">Q {{ item.iva|floatformat:2 }}</td>
+          <td class="right">Q {{ item.total|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="center muted py-2">Sin ítems</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Totales -->
+    <table class="totals mt-4">
+      <tr>
+        <td class="lbl right">TOTAL SIN IVA:&nbsp;</td>
+        <td class="right">Q {{ orden.total_sin_iva|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <td class="lbl right">IVA:&nbsp;</td>
+        <td class="right">Q {{ orden.iva|floatformat:2 }}</td>
+      </tr>
+      <tr>
+        <td class="grand right" colspan="2">
+          TOTAL CON IVA: Q {{ orden.total_con_iva|floatformat:2 }}
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Recepción -->
+  <div class="card mt-6">
+    <div class="subtitle">Detalle de Recepción de Producto / Servicio</div>
+    <div class="kv mt-4">
+      <div class="k">Fecha de entrega:</div><div>{{ orden.recepcion.fecha_entrega }}</div>
+      <div class="k">Observaciones:</div><div>{{ orden.recepcion.observaciones }}</div>
+    </div>
+    <div class="kv mt-4">
+      <div class="k">Nombre de responsable:</div><div>{{ orden.recepcion.responsable }}</div>
+      <div class="k">Teléfono y extensión:</div><div>{{ orden.recepcion.telefono }}</div>
+      <div class="k">Departamento:</div><div>{{ orden.recepcion.departamento }}</div>
+    </div>
+  </div>
+
+  <!-- Nota importante -->
+  <div class="card mt-6">
+    <div class="subtitle">Nota importante</div>
+    <div class="note mt-2">
+      {{ orden.nota_importante|default:"Precios en quetzales. La entrega será en HOSPITAL EL NARANJO, departamento de BODEGA, de lunes a viernes de 9:00 a 16:00. Enviar por correo la factura electrónica con dos días de anticipación. Presentar notas de envío y comprobantes de entrega, así como copia de factura firmada y sellada por quien recibió a satisfacción. Dos días antes de la fecha de pago consultar estado al 2214-0000 ext. 532. Toda mercadería/servicio se da por recibida cuando cumpla requisitos en cantidad, valores y marca. Cualquier cambio debe notificarse para emitir nueva orden. Último día para recibir facturas: 25 de cada mes. Día de entrega de cheques: viernes." }}
+    </div>
+  </div>
+
+  <!-- Firmas -->
+  <div class="signs">
+    <div class="sign"><div class="line">Compras</div></div>
+    <div class="sign"><div class="line">Finanzas</div></div>
+    <div class="sign"><div class="line">Gerencia General</div></div>
+  </div>
+
+  <!-- Pie -->
+  <div class="footer">
+    Generado por el sistema — {{ request.scheme }}://{{ request.get_host }}
+  </div>
+
+</div>
+</body>
+</html>

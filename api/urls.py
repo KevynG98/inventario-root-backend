@@ -19,6 +19,7 @@ from .path import (
     requisisionesUrl, mantenimientoUrl
 )
 from .path.bodegasUrl import bodegasUrl
+from .path import comprasUrl
 
 
 def get_csrf(request):
@@ -51,6 +52,7 @@ urlpatterns = [
     path('mantenimiento/', include(mantenimientoUrl)),
     path('auditoria/', include(historialApiUrl)),
     path('bodegas/', include(bodegasUrl)),
+    path('compras/', include(comprasUrl)),
 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),

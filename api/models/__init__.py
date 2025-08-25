@@ -15,3 +15,4 @@ from .inventarioSegurosModel import Seguros
 from .mantenimientoModel import CentroCosto, Departamento, CuentaContable
 from .entradasModel import Entrada, EntradaItem
 from .salidasModel import Salida, SalidaItem
+from .purchaseOrderModel import PurchaseOrder, PurchaseOrderDetail, PurchaseOrderLog
