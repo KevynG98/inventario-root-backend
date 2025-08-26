@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from corsheaders.defaults import default_headers
 
 # --- Rutas básicas ---
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +40,11 @@ if DEV:
         "http://10.10.20.16:3000"
     ]
 
+    # Permitir encabezado personalizado usado por el frontend para auditoría
+    CORS_ALLOW_HEADERS = list(default_headers) + [
+        'x-user',
+    ]
+
     DATABASES = {
         'default': {
             'ENGINE': 'mssql',
@@ -66,6 +72,9 @@ else:
     CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
     CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
     CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOW_HEADERS = list(default_headers) + [
+        'x-user',
+    ]
 
     DATABASES = {
         'default': {

@@ -51,8 +51,14 @@ def crear_salida(request):
 
         data = serializer.validated_data
         items = data.pop('items', [])
-        user = request.user.username if request.user and request.user.is_authenticated else None
-        salida = Salida.objects.create(usuario=user, **data)
+        # Registrar usuario creador y aplicado_por (salida se aplica al crear)
+        user = getattr(request, 'user', None)
+        username = None
+        if user and getattr(user, 'is_authenticated', False):
+            username = user.username
+        else:
+            username = request.headers.get('X-User') or None
+        salida = Salida.objects.create(usuario=username, aplicado_por=username, **data)
 
         # restar existencias
         for item in items:

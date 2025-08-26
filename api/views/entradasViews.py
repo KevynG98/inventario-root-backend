@@ -87,6 +87,14 @@ def aplicar_entrada(request, pk):
         bodega_sku.save()
 
     entrada.estado = 'aplicada'
+    # Registrar usuario que aplica
+    user = getattr(request, 'user', None)
+    username = None
+    if user and getattr(user, 'is_authenticated', False):
+        username = user.username
+    else:
+        username = request.headers.get('X-User') or None
+    entrada.aplicado_por = username
     entrada.save()
 
     return Response({'message': 'Entrada aplicada', 'entrada': EntradaSerializer(entrada).data}, status=status.HTTP_200_OK)

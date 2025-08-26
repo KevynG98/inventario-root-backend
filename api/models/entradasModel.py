@@ -23,7 +23,10 @@ class Entrada(models.Model):
     cuenta_contable = models.CharField(max_length=200, blank=True, null=True)
 
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='no_aplicada')
+    # Usuario que creó la entrada
     usuario = models.CharField(max_length=150, blank=True, null=True)
+    # Usuario que aplicó la entrada
+    aplicado_por = models.CharField(max_length=150, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -43,4 +46,3 @@ class EntradaItem(models.Model):
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     lote = models.CharField(max_length=100, blank=True, null=True)
     fecha_vencimiento = models.DateField(blank=True, null=True)
-

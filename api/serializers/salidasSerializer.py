@@ -29,4 +29,4 @@ class SalidaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Salida
         fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'updated_at', 'usuario')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'usuario', 'aplicado_por')

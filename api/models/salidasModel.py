@@ -18,7 +18,9 @@ class Salida(models.Model):
     centro_costo = models.CharField(max_length=200, blank=True, null=True)
     cuenta_contable = models.CharField(max_length=200, blank=True, null=True)
 
+    # Usuario que creó/aplicó la salida
     usuario = models.CharField(max_length=150, blank=True, null=True)
+    aplicado_por = models.CharField(max_length=150, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

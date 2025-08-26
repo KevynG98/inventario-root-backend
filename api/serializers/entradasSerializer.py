@@ -37,12 +37,18 @@ class EntradaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Entrada
         fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'updated_at', 'estado', 'usuario')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'estado', 'usuario', 'aplicado_por')
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])
-        user = self.context.get('request').user if self.context and self.context.get('request') else None
-        entrada = Entrada.objects.create(usuario=(user.username if user and user.is_authenticated else None), **validated_data)
+        request = self.context.get('request') if self.context else None
+        user = request.user if request else None
+        username = None
+        if user and getattr(user, 'is_authenticated', False):
+            username = user.username
+        elif request:
+            username = request.headers.get('X-User') or None
+        entrada = Entrada.objects.create(usuario=username, **validated_data)
         for item in items_data:
             item = EntradaItemSerializer().to_internal_value(item)
             EntradaItem.objects.create(entrada=entrada, **item)
