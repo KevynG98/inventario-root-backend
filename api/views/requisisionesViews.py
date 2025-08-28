@@ -65,18 +65,32 @@ def cambiar_estado_requisicion(request, id):
     Cambia únicamente el campo 'estado' de la requisición indicada.
     """
     requisicion = get_object_or_404(Requisicion, id=id)
-    serializer = RequisicionEstadoSerializer(
-        requisicion, data=request.data, partial=True
-    )
+    serializer = RequisicionEstadoSerializer(requisicion, data=request.data, partial=True)
 
     if serializer.is_valid():
+        # Resolve username for auditoría de cambio de estado
+        username = None
+        try:
+            if getattr(request, 'user', None) and getattr(request.user, 'is_authenticated', False):
+                username = request.user.username
+        except Exception:
+            username = None
+        if not username:
+            username = request.headers.get('X-User') or None
+
+        # Save estado/descripcion
         serializer.save()
+
+        # Set estado_actualizado_por
+        requisicion.estado_actualizado_por = username
+        requisicion.save(update_fields=['estado_actualizado_por'])
+
         nuevo_estado = serializer.validated_data.get('estado', requisicion.estado)
         request.descripcion = (
-            f"🔄 Requisición #{requisicion.id} cambió a '{nuevo_estado}'"
+            f"🔄 Requisición #{requisicion.id} cambió a '{nuevo_estado}' por {username or 'N/A'}"
         )
         return Response(
-            {"message": "Estado actualizado", "requisicion": serializer.data},
+            {"message": "Estado actualizado", "requisicion": RequisicionSerializer(requisicion).data},
             status=status.HTTP_200_OK,
         )
 

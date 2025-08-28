@@ -22,6 +22,8 @@ class Requisicion(models.Model):
 
     bodega           = models.CharField(max_length=80)
     usuario          = models.CharField(max_length=150, null=True, blank=True)
+    proveedor        = models.CharField(max_length=150, null=True, blank=True)
+    estado_actualizado_por = models.CharField(max_length=150, null=True, blank=True)
     prioridad        = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES)
     descripcion      = models.TextField(blank=True)
     centro_costo     = models.CharField(max_length=80)

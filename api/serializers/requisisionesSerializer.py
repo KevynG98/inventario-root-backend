@@ -75,4 +75,9 @@ class RequisicionSerializer(serializers.ModelSerializer):
 class RequisicionEstadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Requisicion
-        fields = ('estado',)
+        # Permit update of estado and description via estado endpoint
+        fields = ('estado', 'descripcion', 'estado_actualizado_por')
+        extra_kwargs = {
+            'descripcion': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'estado_actualizado_por': {'read_only': True},
+        }
