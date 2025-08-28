@@ -23,7 +23,17 @@ def guardar_requisicion(request):
     """
     serializer = RequisicionSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        # Resolve username from authenticated user or X-User header
+        username = None
+        try:
+            if getattr(request, 'user', None) and getattr(request.user, 'is_authenticated', False):
+                username = request.user.username
+        except Exception:
+            username = None
+        if not username:
+            username = request.headers.get('X-User') or None
+
+        serializer.save(usuario=username)
         # Para tu middleware de auditoría, si lo usas:
         request.descripcion = f"➕ Requisición #{serializer.data['id']} creada"
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -70,4 +80,22 @@ def cambiar_estado_requisicion(request, id):
             status=status.HTTP_200_OK,
         )
 
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PUT', 'PATCH'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def actualizar_requisicion(request, id):
+    """
+    Actualiza campos de la requisición e items (productos/servicios).
+    Si se envían 'productos' y/o 'servicios', se reemplazan los existentes.
+    """
+    requisicion = get_object_or_404(Requisicion, id=id)
+    partial = request.method == 'PATCH'
+    serializer = RequisicionSerializer(requisicion, data=request.data, partial=partial)
+    if serializer.is_valid():
+        serializer.save()
+        request.descripcion = f"✏️ Requisición #{requisicion.id} actualizada"
+        return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -49,6 +49,29 @@ class RequisicionSerializer(serializers.ModelSerializer):
 
         return requisicion
 
+    def update(self, instance, validated_data):
+        productos_data = validated_data.pop('productos', None)
+        servicios_data = validated_data.pop('servicios', None)
+
+        # Update simple fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Replace productos if provided
+        if productos_data is not None:
+            ProductoRequisicion.objects.filter(requisicion=instance).delete()
+            for producto in productos_data:
+                ProductoRequisicion.objects.create(requisicion=instance, **producto)
+
+        # Replace servicios if provided
+        if servicios_data is not None:
+            ServicioRequisicion.objects.filter(requisicion=instance).delete()
+            for servicio in servicios_data:
+                ServicioRequisicion.objects.create(requisicion=instance, **servicio)
+
+        return instance
+
 class RequisicionEstadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Requisicion
