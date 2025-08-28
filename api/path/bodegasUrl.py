@@ -16,6 +16,8 @@ bodegasUrl = ([
     path('entradas/crear/', crear_entrada, name='crear_entrada'),
     path('entradas/<int:pk>/', obtener_entrada, name='obtener_entrada'),
     path('entradas/aplicar/<int:pk>/', aplicar_entrada, name='aplicar_entrada'),
+    path('entradas/actualizar/<int:pk>/', actualizar_entrada, name='actualizar_entrada'),
+    path('entradas/eliminar/<int:pk>/', eliminar_entrada, name='eliminar_entrada'),
 
     # Salidas
     path('salidas/', listar_salidas, name='listar_salidas'),

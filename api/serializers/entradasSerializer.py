@@ -33,11 +33,23 @@ class EntradaItemSerializer(serializers.ModelSerializer):
 
 class EntradaSerializer(serializers.ModelSerializer):
     items = EntradaItemSerializer(many=True, required=False)
+    total = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Entrada
         fields = '__all__'
-        read_only_fields = ('id', 'created_at', 'updated_at', 'estado', 'usuario', 'aplicado_por')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'estado', 'usuario', 'aplicado_por', 'total')
+
+    def get_total(self, obj):
+        try:
+            items = getattr(obj, 'items', None)
+            if items is None:
+                return '0.00'
+            from decimal import Decimal
+            total = sum([(it.total or 0) for it in items.all()])
+            return f"{Decimal(total):.2f}"
+        except Exception:
+            return '0.00'
 
     def create(self, validated_data):
         items_data = validated_data.pop('items', [])

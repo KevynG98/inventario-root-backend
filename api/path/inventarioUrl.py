@@ -8,6 +8,7 @@ from ..views.inventarioSkuView import *
 from ..views.inventarioSegurosView import *
 from ..views.inventarioPrecioSkuView import *
 from ..views.inventarioPrincipiosView import *
+from ..views.movimientosView import listar_movimientos_detalle
 
 urlpatterns = [
     #proveedores CRUD
@@ -58,6 +59,7 @@ urlpatterns = [
     path('sku-detalle/<int:pk>/', detalle_sku_con_bodegas, name='sku_con_bodegas_detalle'),
     path('skus-filtrados/', listar_skus_filtrados, name='listar_skus_filtrados'),
     path('sku-listar/', sku_listar_completo),
+    path('movimientos-detalle/', listar_movimientos_detalle),
     
     #Seguros CRUD
     path('seguros/', listar_seguros, name='listar_seguros'),

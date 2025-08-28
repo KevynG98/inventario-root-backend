@@ -8,6 +8,7 @@ class Salida(models.Model):
         ('perdida', 'Pérdida'),
         ('destruccion', 'Destrucción'),
         ('venta', 'Venta'),
+        ('paciente', 'Paciente'),
     ]
 
     bodega = models.CharField(max_length=100)
@@ -17,6 +18,10 @@ class Salida(models.Model):
     proveedor = models.CharField(max_length=200, blank=True, null=True)
     centro_costo = models.CharField(max_length=200, blank=True, null=True)
     cuenta_contable = models.CharField(max_length=200, blank=True, null=True)
+
+    # Datos para tipo de salida 'paciente'
+    area = models.CharField(max_length=100, blank=True, null=True)
+    admision = models.IntegerField(blank=True, null=True)
 
     # Usuario que creó/aplicó la salida
     usuario = models.CharField(max_length=150, blank=True, null=True)

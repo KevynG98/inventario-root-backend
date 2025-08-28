@@ -11,6 +11,7 @@ class Traslado(models.Model):
     bodega_origen = models.CharField(max_length=100)
     bodega_destino = models.CharField(max_length=100)
     comentarios = models.TextField(blank=True, null=True)
+    departamento = models.CharField(max_length=100, blank=True, null=True)
 
     enviado_por = models.CharField(max_length=150, blank=True, null=True)
     entregamos_a = models.CharField(max_length=150, blank=True, null=True)
@@ -32,4 +33,3 @@ class TrasladoItem(models.Model):
     sku = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True, null=True)
     cantidad = models.PositiveIntegerField()
-

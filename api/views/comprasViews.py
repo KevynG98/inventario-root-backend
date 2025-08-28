@@ -16,6 +16,8 @@ from rest_framework import status
 
 from ..models.requisisionesModel import Requisicion, ProductoRequisicion, ServicioRequisicion
 from ..models.purchaseOrderModel import PurchaseOrder, PurchaseOrderDetail, PurchaseOrderLog
+from ..models.inventariosSkuModel import InventarioSKU
+from ..models.inventarioProveedoresModel import Proveedor
 from ..serializers.purchaseOrderSerializer import PurchaseOrderSerializer
 from ..serializers.purchaseOrderDetailSerializer import PurchaseOrderDetailSerializer
 
@@ -78,37 +80,57 @@ def crear_oc_desde_requisicion(request, requisicion_id: int):
     oc = PurchaseOrder.objects.create(
         requisicion=req,
         estatus='BORRADOR',
-        proveedor_nombre='',
+        proveedor_nombre=(req.proveedor or ''),
         solicitante_bodega=f"{(req.area_solicitante or '').strip()} - {(req.bodega or '').strip()}".strip(' -'),
         tipo_requisicion=(req.tipo_requisicion or '').strip().capitalize(),
-        total=_sum_requisicion_total(req),
+        total=Decimal('0'),  # se recalcula abajo con IVA
     )
 
     # Clonar ítems desde requisición (productos/servicios)
+    oc_total = Decimal('0')
     prod_qs = ProductoRequisicion.objects.filter(requisicion=req)
     for p in prod_qs:
+        precio = Decimal(p.precio or 0)
+        cantidad = Decimal(p.cantidad or 0)
+        iva_unit = Decimal('0')
+        try:
+            sku = InventarioSKU.objects.filter(codigo_sku=p.sku).only('iva').first()
+            if sku and (sku.iva or '').lower() == 'afecto':
+                iva_unit = (precio * Decimal('0.12')).quantize(Decimal('0.01'))
+        except Exception:
+            pass
+        total_item = (cantidad * (precio + iva_unit)).quantize(Decimal('0.01'))
         PurchaseOrderDetail.objects.create(
             orden=oc,
             codigo_sku=p.sku,
             descripcion=p.descripcion,
             unidad_medida=p.unidad,
-            cantidad=p.cantidad,
-            precio_sin_iva=p.precio,  # asumimos sin IVA en requisición
-            iva=Decimal('0'),
-            total=p.total,
+            cantidad=cantidad,
+            precio_sin_iva=precio,
+            iva=iva_unit,
+            total=total_item,
         )
+        oc_total += total_item
     serv_qs = ServicioRequisicion.objects.filter(requisicion=req)
     for s in serv_qs:
+        precio = Decimal(s.precio or 0)
+        cantidad = Decimal(s.cantidad or 0)
+        iva_unit = Decimal('0')  # servicios exentos por defecto (ajustable)
+        total_item = (cantidad * (precio + iva_unit)).quantize(Decimal('0.01'))
         PurchaseOrderDetail.objects.create(
             orden=oc,
             codigo_sku='SERV',
             descripcion=s.descripcion,
             unidad_medida='SERV',
-            cantidad=s.cantidad,
-            precio_sin_iva=s.precio,
-            iva=Decimal('0'),
-            total=s.total,
+            cantidad=cantidad,
+            precio_sin_iva=precio,
+            iva=iva_unit,
+            total=total_item,
         )
+        oc_total += total_item
+
+    oc.total = oc_total
+    oc.save(update_fields=['total'])
 
     ser = PurchaseOrderSerializer(oc)
     return Response(ser.data, status=status.HTTP_201_CREATED)
@@ -273,10 +295,58 @@ def descargar_pdf_orden_compra(request, id: int):
     oc = get_object_or_404(PurchaseOrder, id=id)
     items = list(PurchaseOrderDetail.objects.filter(orden=oc))
 
-    # Preparar payload para la plantilla
-    total_sin_iva = sum([it.precio_sin_iva * it.cantidad for it in items]) if items else Decimal('0')
-    iva = sum([it.iva * it.cantidad for it in items]) if items else Decimal('0')
-    total_con_iva = sum([it.total for it in items]) if items else Decimal('0')
+    # Resolver datos de proveedor desde snapshot o catálogo
+    # Tomar proveedor de la OC o, si no hay, de la requisición asociada
+    proveedor_nombre_raw = (oc.proveedor_nombre or oc.requisicion.proveedor or '').strip()
+    proveedor_obj = None
+    if proveedor_nombre_raw:
+        try:
+            if proveedor_nombre_raw.isdigit():
+                proveedor_obj = Proveedor.objects.filter(id=int(proveedor_nombre_raw)).first()
+            if not proveedor_obj:
+                proveedor_obj = Proveedor.objects.filter(nombre__iexact=proveedor_nombre_raw).first()
+        except Exception:
+            proveedor_obj = None
+
+    proveedor_ctx = {
+        "nombre": (proveedor_obj.nombre if proveedor_obj else proveedor_nombre_raw) or '',
+        "direccion": (getattr(proveedor_obj, 'direccion', '') if proveedor_obj else '') or '',
+        "nit": (getattr(proveedor_obj, 'nit', '') if proveedor_obj else '') or '',
+        "contacto": '',
+        "correo": (getattr(proveedor_obj, 'correo', '') if proveedor_obj else '') or '',
+        "telefono": (getattr(proveedor_obj, 'telefono', '') if proveedor_obj else '') or '',
+    }
+
+    # Calcular IVA por ítem si no existe, usando IVA del SKU (afecto => 12%)
+    detalles_ctx = []
+    total_sin_iva = Decimal('0')
+    total_iva = Decimal('0')
+    total_con_iva = Decimal('0')
+    for it in items:
+        precio_sin_iva = Decimal(it.precio_sin_iva or 0)
+        cantidad = Decimal(it.cantidad or 0)
+        iva_unit = Decimal(it.iva or 0)
+        if iva_unit == 0 and it.codigo_sku and it.codigo_sku != 'SERV':
+            try:
+                sku = InventarioSKU.objects.filter(codigo_sku=it.codigo_sku).only('iva').first()
+                if sku and (sku.iva or '').lower() == 'afecto':
+                    iva_unit = (precio_sin_iva * Decimal('0.12')).quantize(Decimal('0.01'))
+            except Exception:
+                pass
+        total_unit = precio_sin_iva + iva_unit
+        total_item = (total_unit * cantidad).quantize(Decimal('0.01'))
+        detalles_ctx.append({
+            "codigo_sku": it.codigo_sku,
+            "descripcion": it.descripcion or '',
+            "cantidad": float(cantidad),
+            "unidad_medida": it.unidad_medida or '',
+            "precio_sin_iva": float(precio_sin_iva),
+            "iva": float(iva_unit),
+            "total": float(total_item),
+        })
+        total_sin_iva += (precio_sin_iva * cantidad)
+        total_iva += (iva_unit * cantidad)
+        total_con_iva += total_item
 
     orden_ctx = {
         "numero": oc.numero or str(oc.id),
@@ -284,35 +354,26 @@ def descargar_pdf_orden_compra(request, id: int):
         "estado": oc.estatus,
         "impreso_por": getattr(request.user, 'username', '') if request.user.is_authenticated else '',
         "fecha_impresion": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        "proveedor": {
-            "nombre": oc.proveedor_nombre or '', "direccion": '', "nit": '',
-            "contacto": None, "correo": None, "telefono": None,
+        "proveedor": proveedor_ctx,
+        "facturar_a": {
+            "nombre": "Servicios Medicos Integrados el Naranjo,S.A.",
+            "direccion": "Bulevar El Naranjo 22-40, Colonia El Naranjo Zona 4 de Mixco, Guatemala Ciudad",
+            "nit": "66784395",
         },
-        "facturar_a": {"nombre": "Hospital", "direccion": "", "nit": ""},
         "forma_pago": ("Crédito" if oc.condiciones_pago == 'CREDITO' else ("Contado" if oc.condiciones_pago == 'CONTADO' else None)),
         "dias_credito": oc.dias_credito,
-        "forma_entrega": None,
-        "tiempo_entrega": None,
-        "items": [
-            {
-                "codigo_sku": it.codigo_sku,
-                "descripcion": it.descripcion or '',
-                "cantidad": float(it.cantidad),
-                "unidad_medida": it.unidad_medida or '',
-                "precio_sin_iva": float(it.precio_sin_iva),
-                "iva": float(it.iva),
-                "total": float(it.total),
-            } for it in items
-        ],
+        "forma_entrega": "",  # dejar vacío en PDF si no se define
+        "tiempo_entrega": "",
+        "items": detalles_ctx,
         "total_sin_iva": float(total_sin_iva),
-        "iva": float(iva),
+        "iva": float(total_iva),
         "total_con_iva": float(total_con_iva),
         "recepcion": {
-            "fecha_entrega": oc.fecha_entrega.strftime('%Y-%m-%d') if oc.fecha_entrega else None,
-            "observaciones": None,
-            "responsable": None,
-            "telefono": None,
-            "departamento": None,
+            "fecha_entrega": oc.fecha_entrega.strftime('%Y-%m-%d') if oc.fecha_entrega else "",
+            "observaciones": "",
+            "responsable": "",
+            "telefono": "",
+            "departamento": "",
         },
         "nota_importante": None,
     }
