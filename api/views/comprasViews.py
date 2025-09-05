@@ -19,6 +19,7 @@ from ..models.purchaseOrderModel import PurchaseOrder, PurchaseOrderDetail, Purc
 from ..models.inventariosSkuModel import InventarioSKU
 from ..models.inventarioProveedoresModel import Proveedor
 from ..serializers.purchaseOrderSerializer import PurchaseOrderSerializer
+from api.utils.pagination import CustomPageNumberPagination
 from ..serializers.purchaseOrderDetailSerializer import PurchaseOrderDetailSerializer
 
 
@@ -148,7 +149,85 @@ def _oc_payload(oc: PurchaseOrder):
     items = PurchaseOrderDetail.objects.filter(orden=oc)
     data = PurchaseOrderSerializer(oc).data
     data['items'] = PurchaseOrderDetailSerializer(items, many=True).data
+
+    # Añadir bitácora y campos de auditoría/visualización
+    try:
+        logs = list(PurchaseOrderLog.objects.filter(orden=oc).select_related('usuario').order_by('-timestamp'))
+        data['bitacora'] = [{
+            'accion': lg.accion,
+            'usuario': getattr(lg.usuario, 'username', None),
+            'observaciones': lg.observaciones,
+            'timestamp': lg.timestamp.strftime('%Y-%m-%d %H:%M:%S') if lg.timestamp else None,
+        } for lg in logs]
+        gen = next((lg for lg in logs if lg.accion == 'GENERAR'), None)
+        data['generada_por'] = getattr(gen.usuario, 'username', None) if gen else None
+    except Exception:
+        data['bitacora'] = []
+        data['generada_por'] = None
+
+    # Enlazar datos de la requisición para "visualizar"
+    try:
+        req = oc.requisicion
+        data['requisicion_info'] = {
+            'alta_por': req.usuario,
+            'observaciones_alta': req.descripcion,
+            'estado': req.estado,
+            'estado_actualizado_por': req.estado_actualizado_por,
+            'fecha': req.created_at.strftime('%Y-%m-%d %H:%M:%S') if req.created_at else None,
+            'proveedor': req.proveedor,
+            'centro_costo': req.centro_costo,
+            'departamento': req.area_solicitante,
+            'bodega': req.bodega,
+            'tipo_requisicion': (req.tipo_requisicion or '').capitalize() if req.tipo_requisicion else None,
+        }
+    except Exception:
+        data['requisicion_info'] = None
+
     return data
+
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def listar_ordenes_compra(request):
+    """
+    Lista órdenes de compra con filtros simples.
+    Query params:
+      - estatus: valores UI {NUEVA, EDICION, ANULADA, AUTORIZADA}
+      - page, page_size
+    """
+    estatus_ui = (request.GET.get('estatus') or '').strip().upper()
+    mapping = {
+        'NUEVA': 'BORRADOR',
+        'EDICION': 'EDICION',
+        'ANULADA': 'ANULADA',
+        'AUTORIZADA': 'GENERADA',
+    }
+    qs = PurchaseOrder.objects.all().order_by('-id')
+    if estatus_ui in mapping:
+        qs = qs.filter(estatus=mapping[estatus_ui])
+
+    paginator = CustomPageNumberPagination()
+    page = paginator.paginate_queryset(qs, request)
+    data = []
+    for oc in page:
+        ui_status = {
+            'BORRADOR': 'Nueva',
+            'EDICION': 'Edición',
+            'ANULADA': 'Anulada',
+            'GENERADA': 'Autorizada',
+        }.get(oc.estatus, oc.estatus)
+        data.append({
+            'id': oc.id,
+            'numero': oc.numero or str(oc.id),
+            'estatus': ui_status,
+            'fecha': oc.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') if oc.fecha_creacion else None,
+            'proveedor': (oc.proveedor_nombre or oc.requisicion.proveedor or ''),
+            'solicitante_bodega': oc.solicitante_bodega,
+            'total': str(oc.total),
+        })
+
+    return paginator.get_paginated_response(data)
 
 
 @api_view(['PATCH'])

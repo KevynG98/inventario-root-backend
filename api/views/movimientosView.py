@@ -12,6 +12,7 @@ from ..models.entradasModel import Entrada, EntradaItem
 from ..models.salidasModel import Salida, SalidaItem
 from ..models.trasladosModel import Traslado, TrasladoItem
 from datetime import datetime
+from django.utils import timezone
 
 @api_view(['GET'])
 def listar_historial_movimientos(request):
@@ -83,8 +84,14 @@ def listar_movimientos_detalle(request):
             if not sku_match(it.sku):
                 continue
             tipo = e.tipo_entrada.replace('_', ' ').title() if e.tipo_entrada else 'Entrada'
+            dt = e.created_at
+            if dt:
+                try:
+                    dt = timezone.localtime(dt)
+                except Exception:
+                    pass
             items.append({
-                'fecha_hora': e.created_at.strftime('%Y-%m-%d %H:%M:%S') if e.created_at else '',
+                'fecha_hora': dt.strftime('%Y-%m-%d %H:%M:%S') if dt else '',
                 'sku': it.sku,
                 'nombre': InventarioSKU.objects.filter(codigo_sku=it.sku).values_list('nombre', flat=True).first() or '',
                 'movimiento': f"Entrada-{tipo}",
@@ -106,8 +113,14 @@ def listar_movimientos_detalle(request):
             if not sku_match(it.sku):
                 continue
             tipo = s.tipo_salida.replace('_', ' ').title() if s.tipo_salida else 'Salida'
+            dt = s.created_at
+            if dt:
+                try:
+                    dt = timezone.localtime(dt)
+                except Exception:
+                    pass
             items.append({
-                'fecha_hora': s.created_at.strftime('%Y-%m-%d %H:%M:%S') if s.created_at else '',
+                'fecha_hora': dt.strftime('%Y-%m-%d %H:%M:%S') if dt else '',
                 'sku': it.sku,
                 'nombre': InventarioSKU.objects.filter(codigo_sku=it.sku).values_list('nombre', flat=True).first() or '',
                 'movimiento': f"Salida-{tipo}",
@@ -128,8 +141,14 @@ def listar_movimientos_detalle(request):
                 continue
             # Salida desde origen
             if (not bodega) or (t.bodega_origen and bodega.lower() in t.bodega_origen.lower()):
+                dt = t.fecha_envio
+                if dt:
+                    try:
+                        dt = timezone.localtime(dt)
+                    except Exception:
+                        pass
                 items.append({
-                    'fecha_hora': t.fecha_envio.strftime('%Y-%m-%d %H:%M:%S') if t.fecha_envio else '',
+                    'fecha_hora': dt.strftime('%Y-%m-%d %H:%M:%S') if dt else '',
                     'sku': it.sku,
                     'nombre': InventarioSKU.objects.filter(codigo_sku=it.sku).values_list('nombre', flat=True).first() or '',
                     'movimiento': f"Traslado-{t.bodega_destino}",
@@ -137,8 +156,14 @@ def listar_movimientos_detalle(request):
                 })
             # Entrada al destino (solo si fue recibido)
             if t.estatus == 'RECIBIDO' and ((not bodega) or (t.bodega_destino and bodega.lower() in t.bodega_destino.lower())):
+                dt2 = t.fecha_recibido
+                if dt2:
+                    try:
+                        dt2 = timezone.localtime(dt2)
+                    except Exception:
+                        pass
                 items.append({
-                    'fecha_hora': t.fecha_recibido.strftime('%Y-%m-%d %H:%M:%S') if t.fecha_recibido else '',
+                    'fecha_hora': dt2.strftime('%Y-%m-%d %H:%M:%S') if dt2 else '',
                     'sku': it.sku,
                     'nombre': InventarioSKU.objects.filter(codigo_sku=it.sku).values_list('nombre', flat=True).first() or '',
                     'movimiento': f"Traslado-{t.bodega_origen}",
