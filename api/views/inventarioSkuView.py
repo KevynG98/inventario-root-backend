@@ -164,13 +164,14 @@ def buscar_skus_con_bodegas(request):
         if ql:
             filtros |= Q(nombre__icontains=ql)
             filtros |= Q(codigo_sku__icontains=ql)
-            filtros |= Q(codigo_barras__icontains=ql)
+            # El campo en el modelo es 'barcode' (no 'codigo_barras')
+            filtros |= Q(barcode__icontains=ql)
     if nombre:
         filtros &= Q(nombre__icontains=nombre)
     if sku_codigo:
         filtros &= Q(codigo_sku__icontains=sku_codigo)
     if codigo_barras:
-        filtros &= Q(codigo_barras__icontains=codigo_barras)
+        filtros &= Q(barcode__icontains=codigo_barras)
 
     if filtros:
         queryset = queryset.filter(filtros)
@@ -212,13 +213,13 @@ def buscar_skus(request):
         if ql:
             filtros |= Q(nombre__icontains=ql)
             filtros |= Q(codigo_sku__icontains=ql)
-            filtros |= Q(codigo_barras__icontains=ql)
+            filtros |= Q(barcode__icontains=ql)
     if nombre:
         filtros &= Q(nombre__icontains=nombre)
     if sku_codigo:
         filtros &= Q(codigo_sku__icontains=sku_codigo)
     if codigo_barras:
-        filtros &= Q(codigo_barras__icontains=codigo_barras)
+        filtros &= Q(barcode__icontains=codigo_barras)
 
     if filtros:
         queryset = queryset.filter(filtros)
