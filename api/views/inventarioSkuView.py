@@ -181,6 +181,54 @@ def buscar_skus_con_bodegas(request):
     return paginator.get_paginated_response(serializer.data)
 
 
+@swagger_auto_schema(
+    method='get',
+    operation_summary="Buscar SKUs",
+    tags=["inventario-sku"],
+    manual_parameters=[
+        openapi.Parameter('q', openapi.IN_QUERY, description='Búsqueda libre por nombre, código SKU o código de barras', type=openapi.TYPE_STRING),
+        openapi.Parameter('nombre', openapi.IN_QUERY, description='Filtrar por nombre (icontains)', type=openapi.TYPE_STRING),
+        openapi.Parameter('sku_codigo', openapi.IN_QUERY, description='Filtrar por código de SKU (icontains)', type=openapi.TYPE_STRING),
+        openapi.Parameter('codigo_barras', openapi.IN_QUERY, description='Filtrar por código de barras (icontains)', type=openapi.TYPE_STRING),
+        openapi.Parameter('page', openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
+        openapi.Parameter('page_size', openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
+    ]
+)
+@api_view(['GET'])
+def buscar_skus(request):
+    """
+    Busca SKUs por nombre, código SKU o código de barras. Respuesta paginada.
+    """
+    queryset = InventarioSKU.objects.filter(is_active=True).order_by('nombre')
+
+    q = request.query_params.get('q')
+    nombre = request.query_params.get('nombre')
+    sku_codigo = request.query_params.get('sku_codigo')
+    codigo_barras = request.query_params.get('codigo_barras')
+
+    filtros = Q()
+    if q:
+        ql = q.strip()
+        if ql:
+            filtros |= Q(nombre__icontains=ql)
+            filtros |= Q(codigo_sku__icontains=ql)
+            filtros |= Q(codigo_barras__icontains=ql)
+    if nombre:
+        filtros &= Q(nombre__icontains=nombre)
+    if sku_codigo:
+        filtros &= Q(codigo_sku__icontains=sku_codigo)
+    if codigo_barras:
+        filtros &= Q(codigo_barras__icontains=codigo_barras)
+
+    if filtros:
+        queryset = queryset.filter(filtros)
+
+    paginator = CustomPageNumberPagination()
+    result_page = paginator.paginate_queryset(queryset, request)
+    serializer = InventarioSKUSerializer(result_page, many=True)
+    return paginator.get_paginated_response(serializer.data)
+
+
 @swagger_auto_schema(method='get', operation_summary="Detalle de SKU con bodegas", tags=["inventario-sku"])
 @api_view(['GET'])
 def detalle_sku_con_bodegas(request, pk):

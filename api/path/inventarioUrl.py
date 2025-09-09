@@ -50,6 +50,7 @@ urlpatterns = [
     
     #Inventarios
     path('skus/', listar_skus),
+    path('skus/buscar/', buscar_skus, name='buscar_skus'),
     path('skus-crear/', crear_sku),
     path('skus/<int:pk>/', obtener_sku),
     path('skus-actualizar/<int:pk>/', actualizar_sku),
