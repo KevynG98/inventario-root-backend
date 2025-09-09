@@ -128,7 +128,8 @@ def listar_movimientos_detalle(request):
             })
 
     # Traslados
-    q_t = Traslado.objects.all()
+    # Traslados: excluir ANULADO para que no afecten el histórico acumulado
+    q_t = Traslado.objects.exclude(estatus='ANULADO')
     if dt_inicio:
         q_t = q_t.filter(fecha_envio__date__gte=dt_inicio.date())
     if dt_fin:
