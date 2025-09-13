@@ -1,19 +1,33 @@
+# settings.py
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 
-# --- Rutas básicas ---
+# --- Base paths ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- Controlar ambiente ---
-DEV = False  # <<< SOLO cambia esto a False en producción
+# --- Load environment (safe in both DEV/PROD) ---
+load_dotenv(BASE_DIR / '.env')
+
+# --- Helper: CSV env -> list (skip empties/whitespace) ---
+def env_csv(name: str, default: str = ""):
+    raw = os.getenv(name, default)
+    return [x.strip() for x in raw.split(",") if x.strip()]
+
+# --- Toggle environment ---
+DEV = False  # <<< set True for local development
 
 if DEV:
-    print("🌍 MODO DESARROLLO: Estás usando base de datos SQL Server (hospitalpruebas)\n")
+    print("🌍 DEV MODE: Using SQL Server (hospitalpruebas)\n")
 else:
-    print("☢️ MODO PRODUCCIÓN: Estás usando base de datos SQL Server (hospitalproduccion)\n")
+    print("☢️ PROD MODE: Using SQL Server (hospitalproduccion)\n")
 
-# --- Secretos y configuraciones ---
+# --- ODBC driver & params (unified for DEV/PROD) ---
+ODBC_DRIVER = os.getenv("SQL_ODBC_DRIVER", "ODBC Driver 18 for SQL Server")
+ODBC_EXTRA  = os.getenv("DB_ODBC_EXTRA",  "Encrypt=yes;TrustServerCertificate=yes;")
+
+# --- Secrets / Security ---
 if DEV:
     SECRET_KEY = 'django-insecure-er(in23ikbn2fkn)ik9@yjj#1io1u+@%^*xnp(2%^0)473)9vy'
     DEBUG = True
@@ -22,29 +36,25 @@ if DEV:
         '192.168.1.18',
         '10.10.20.16',
         'localhost',
-        '127.0.0.1'
+        '127.0.0.1',
     ]
 
+    # CORS / CSRF (DEV)
     CORS_ALLOW_CREDENTIALS = True
-
     CSRF_TRUSTED_ORIGINS = [
         "http://localhost:3000",
         "http://192.168.1.18:3000",
-        "http://10.10.20.16:3000"
+        "http://10.10.20.16:3000",
     ]
-
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://192.168.1.18:3000",
-        "http://10.10.20.16:3000"
+        "http://10.10.20.16:3000",
     ]
+    CORS_ALLOW_HEADERS = list(default_headers) + ['x-user']
 
-    # Permitir encabezado personalizado usado por el frontend para auditoría
-    CORS_ALLOW_HEADERS = list(default_headers) + [
-        'x-user',
-    ]
-
+    # Database (DEV)
     DATABASES = {
         'default': {
             'ENGINE': 'mssql',
@@ -54,28 +64,24 @@ if DEV:
             'HOST': '172.25.146.246',
             'PORT': '1433',
             'OPTIONS': {
-                'driver': os.getenv('SQL_ODBC_DRIVER', 'ODBC Driver 18 for SQL Server'),
-                # Con Driver 18: cifra y confía en el cert del servidor (self-signed)
-                'extra_params': 'Encrypt=yes;TrustServerCertificate=yes;',
+                'driver': ODBC_DRIVER,
+                'extra_params': ODBC_EXTRA,  # e.g. Encrypt=yes;TrustServerCertificate=yes;
             },
         }
     }
 
 else:
-    from dotenv import load_dotenv
-    load_dotenv(BASE_DIR / '.env')
-
     SECRET_KEY = os.getenv('SECRET_KEY')
     DEBUG = False
 
-    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
-    CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
-    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    # CORS / CSRF / Hosts (PROD via .env)
+    ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS')
+    CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS')
+    CORS_ALLOWED_ORIGINS = env_csv('CORS_ALLOWED_ORIGINS')
     CORS_ALLOW_CREDENTIALS = True
-    CORS_ALLOW_HEADERS = list(default_headers) + [
-        'x-user',
-    ]
+    CORS_ALLOW_HEADERS = list(default_headers) + ['x-user']
 
+    # Database (PROD via .env)
     DATABASES = {
         'default': {
             'ENGINE': 'mssql',
@@ -85,13 +91,13 @@ else:
             'HOST': os.getenv('DB_PROD_HOST'),
             'PORT': os.getenv('DB_PROD_PORT', '1433'),
             'OPTIONS': {
-                'driver': 'ODBC Driver 17 for SQL Server',
-                'trust_server_certificate': 'yes',
+                'driver': ODBC_DRIVER,     # reads SQL_ODBC_DRIVER from .env
+                'extra_params': ODBC_EXTRA # reads DB_ODBC_EXTRA from .env (optional)
             },
         }
     }
 
-# --- Apps instaladas ---
+# --- Installed apps ---
 INSTALLED_APPS = [
     'corsheaders',
     'django.contrib.auth',
@@ -99,11 +105,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'drf_yasg',  # 👈 AGREGA ESTA LÍNEA
+    'drf_yasg',
     'api.apps.ApiConfig',
 ]
 
-# --- Configuración de DRF ---
+# --- DRF config ---
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'api.utils.pagination.CustomPageNumberPagination',
     'PAGE_SIZE': 10,
@@ -112,7 +118,7 @@ REST_FRAMEWORK = {
     ]
 }
 
-# --- Middlewares ---
+# --- Middleware ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -126,8 +132,9 @@ MIDDLEWARE = [
     'api.middlewares.MovimientoInventarioMiddleware.MovimientoInventarioMiddleware',
 ]
 
-# --- Configuración de URLs ---
+# --- URLs / WSGI ---
 ROOT_URLCONF = 'api.urls'
+WSGI_APPLICATION = 'api.wsgi.application'
 
 # --- Templates ---
 TEMPLATES = [
@@ -146,10 +153,7 @@ TEMPLATES = [
     },
 ]
 
-# --- WSGI ---
-WSGI_APPLICATION = 'api.wsgi.application'
-
-# --- Validadores de contraseñas ---
+# --- Password validators ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -157,16 +161,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# --- Internacionalización ---
+# --- i18n / tz ---
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'America/Guatemala'
 USE_I18N = True
 USE_TZ = True
 
-# --- Archivos estáticos ---
+# --- Static files ---
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'api' / 'static']
 
-# --- Primary key default ---
+# --- Default PK ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
