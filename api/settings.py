@@ -6,7 +6,7 @@ from corsheaders.defaults import default_headers
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Controlar ambiente ---
-DEV = True  # <<< SOLO cambia esto a False en producción
+DEV = False  # <<< SOLO cambia esto a False en producción
 
 if DEV:
     print("🌍 MODO DESARROLLO: Estás usando base de datos SQL Server (hospitalpruebas)\n")
