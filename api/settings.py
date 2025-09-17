@@ -45,12 +45,14 @@ if DEV:
         "http://localhost:3000",
         "http://192.168.1.18:3000",
         "http://10.10.20.16:3000",
+        "http://10.10.20.16:3077",
     ]
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://192.168.1.18:3000",
         "http://10.10.20.16:3000",
+        "http://10.10.20.16:3077",
     ]
     CORS_ALLOW_HEADERS = list(default_headers) + ['x-user']
 
