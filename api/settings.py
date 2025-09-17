@@ -16,7 +16,7 @@ def env_csv(name: str, default: str = ""):
     return [x.strip() for x in raw.split(",") if x.strip()]
 
 # --- Toggle environment ---
-DEV = False  # <<< set True for local development
+DEV = True  # <<< set True for local development
 
 if DEV:
     print("🌍 DEV MODE: Using SQL Server (hospitalpruebas)\n")
