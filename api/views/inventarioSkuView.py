@@ -124,7 +124,7 @@ def listar_skus_con_bodegas(request):
     """
     Lista SKUs con información relacionada a sus bodegas.
     """
-    queryset = InventarioSKU.objects.prefetch_related('bodegas').order_by('nombre')
+    queryset = InventarioSKU.objects.prefetch_related('bodegas').order_by('id')
     paginator = CustomPageNumberPagination()
     result_page = paginator.paginate_queryset(queryset, request)
     serializer = InventarioSKUSerializer(result_page, many=True)

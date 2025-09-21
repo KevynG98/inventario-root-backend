@@ -11,6 +11,7 @@ from ..models.inventariosSkuModel import InventarioSKU
 from ..models.entradasModel import Entrada, EntradaItem
 from ..models.salidasModel import Salida, SalidaItem
 from ..models.trasladosModel import Traslado, TrasladoItem
+from ..models.cargaMasivaModel import CargaMasivaExistenciaItem
 from datetime import datetime
 from django.utils import timezone
 
@@ -170,6 +171,34 @@ def listar_movimientos_detalle(request):
                     'movimiento': f"Traslado-{t.bodega_origen}",
                     'cantidad': float(it.cantidad),
                 })
+
+    # Cargas masivas (existencias)
+    q_c = CargaMasivaExistenciaItem.objects.select_related('carga')
+    if bodega:
+        q_c = q_c.filter(carga__bodega__icontains=bodega)
+    if dt_inicio:
+        q_c = q_c.filter(carga__created_at__date__gte=dt_inicio.date())
+    if dt_fin:
+        q_c = q_c.filter(carga__created_at__date__lte=dt_fin.date())
+
+    for carga_item in q_c:
+        if sku_code and carga_item.sku != sku_code:
+            continue
+        if not sku_match(carga_item.sku):
+            continue
+        dt = carga_item.carga.created_at
+        if dt:
+            try:
+                dt = timezone.localtime(dt)
+            except Exception:
+                pass
+        items.append({
+            'fecha_hora': dt.strftime('%Y-%m-%d %H:%M:%S') if dt else '',
+            'sku': carga_item.sku,
+            'nombre': InventarioSKU.objects.filter(codigo_sku=carga_item.sku).values_list('nombre', flat=True).first() or '',
+            'movimiento': 'Carga-Masiva',
+            'cantidad': float(carga_item.cantidad_cargada),
+        })
 
     # Ordenar por fecha y calcular inventario acumulado
     def key_sort(x):

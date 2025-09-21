@@ -17,3 +17,9 @@ from .entradasModel import Entrada, EntradaItem
 from .salidasModel import Salida, SalidaItem
 from .trasladosModel import Traslado, TrasladoItem
 from .purchaseOrderModel import PurchaseOrder, PurchaseOrderDetail, PurchaseOrderLog
+from .cargaMasivaModel import (
+    CargaMasivaExistencia,
+    CargaMasivaExistenciaItem,
+    CargaMasivaPrecio,
+    CargaMasivaPrecioItem,
+)

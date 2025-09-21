@@ -4,6 +4,14 @@ from ..views.mantenimientoViews import (
     listar_departamentos, crear_departamento, actualizar_departamento, eliminar_departamento, obtener_departamento,
     listar_cuentas_contables, crear_cuenta_contable, actualizar_cuenta_contable, eliminar_cuenta_contable, obtener_cuenta_contable,
 )
+from ..views.cargaMasivaViews import (
+    listar_cargas_existencias,
+    detalle_carga_existencias,
+    crear_carga_existencias,
+    listar_cargas_precios,
+    detalle_carga_precios,
+    crear_carga_precios,
+)
 
 urlpatterns = [
     # Centros de Costo
@@ -26,4 +34,14 @@ urlpatterns = [
     path('cuentas-contables/actualizar/<int:pk>/', actualizar_cuenta_contable, name='actualizar_cuenta_contable'),
     path('cuentas-contables/eliminar/<int:pk>/', eliminar_cuenta_contable, name='eliminar_cuenta_contable'),
     path('cuentas-contables/<int:pk>/', obtener_cuenta_contable, name='obtener_cuenta_contable'),
+
+    # Carga masiva existencias
+    path('carga-masiva/existencias/', listar_cargas_existencias, name='listar_cargas_existencias'),
+    path('carga-masiva/existencias/<int:pk>/', detalle_carga_existencias, name='detalle_carga_existencias'),
+    path('carga-masiva/existencias/crear/', crear_carga_existencias, name='crear_carga_existencias'),
+
+    # Carga masiva precios
+    path('carga-masiva/precios/', listar_cargas_precios, name='listar_cargas_precios'),
+    path('carga-masiva/precios/<int:pk>/', detalle_carga_precios, name='detalle_carga_precios'),
+    path('carga-masiva/precios/crear/', crear_carga_precios, name='crear_carga_precios'),
 ]
