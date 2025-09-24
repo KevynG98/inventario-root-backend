@@ -51,6 +51,12 @@ def crear_salida(request):
 
         data = serializer.validated_data
         items = data.pop('items', [])
+
+        if not items:
+            return Response({'error': 'Debe agregar al menos un SKU a la salida.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if any(not str(it.get('sku', '')).strip() for it in items):
+            return Response({'error': 'Todos los ítems de la salida deben tener un SKU válido.'}, status=status.HTTP_400_BAD_REQUEST)
         # Registrar usuario creador y aplicado_por (salida se aplica al crear)
         user = getattr(request, 'user', None)
         username = None

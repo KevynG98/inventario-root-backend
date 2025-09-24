@@ -1,5 +1,6 @@
 import io
 import re
+import unicodedata
 import zipfile
 from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
@@ -39,6 +40,19 @@ def _column_index(col_letters: str) -> int:
         if 'A' <= ch <= 'Z':
             result = result * 26 + (ord(ch) - ord('A') + 1)
     return max(result - 1, 0)
+
+
+def _normalize_header_value(value) -> str:
+    text = str(value or '').strip().lower()
+    if not text:
+        return ''
+    normalized = unicodedata.normalize('NFKD', text)
+    return ''.join(ch for ch in normalized if not unicodedata.combining(ch))
+
+
+def _header_token(value) -> str:
+    normalized = _normalize_header_value(value)
+    return re.sub(r'[^a-z0-9]', '', normalized)
 
 
 def _load_excel_rows(file_obj):
@@ -159,12 +173,32 @@ def crear_carga_existencias(request):
     if len(rows) <= 1:
         return Response({'error': 'El archivo no contiene registros para procesar'}, status=status.HTTP_400_BAD_REQUEST)
 
+    header_tokens = [_header_token(cell) for cell in rows[0]] if rows else []
+    sku_aliases = {'sku', 'codigosku', 'codigo'}
+    cantidad_aliases = {
+        'cantidad',
+        'cantidadtotal',
+        'cantidaddisponible',
+        'cantidades',
+        'existencia',
+        'existencias',
+        'qty',
+        'cantidadfinal',
+    }
+
+    sku_idx = next((i for i, token in enumerate(header_tokens) if token in sku_aliases), None)
+    cantidad_idx = next((i for i, token in enumerate(header_tokens) if token in cantidad_aliases), None)
+
+    if sku_idx is None:
+        sku_idx = 0
+    if cantidad_idx is None:
+        cantidad_idx = 1
+
     acumulado = defaultdict(int)
     for idx, row in enumerate(rows[1:], start=2):
         row = list(row)
-        if len(row) < 2:
-            row += [None] * (2 - len(row))
-        sku_raw, cantidad_raw = row[:2]
+        sku_raw = row[sku_idx] if sku_idx < len(row) else ''
+        cantidad_raw = row[cantidad_idx] if cantidad_idx < len(row) else ''
         sku_code = str(sku_raw).strip() if sku_raw else ''
         if not sku_code:
             continue
