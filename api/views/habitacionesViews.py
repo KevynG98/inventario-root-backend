@@ -8,6 +8,14 @@ from api.utils.pagination import CustomPageNumberPagination
 from ..models.habitacionModel import Habitacion
 from ..serializers.habitacionSerializer import HabitacionSerializer
 
+
+ESTADOS_DISPONIBLES = {
+    'Vacante Inspeccionada -DISPONIBLE-',
+    'Vacante Inspeccionada - Disponible',
+    'Vacante Inspeccionada -DISPONIBLE',
+    'Vacante Inspeccionada - Disponible -',
+}
+
 @api_view(['POST'])
 def crear_habitacion(request):
     serializer = HabitacionSerializer(data=request.data)
@@ -18,7 +26,16 @@ def crear_habitacion(request):
 
 @api_view(['GET'])
 def listar_habitaciones(request):
-    habitaciones = Habitacion.objects.filter(is_active=True).order_by('area', 'codigo')
+    habitaciones = Habitacion.objects.filter(is_active=True)
+
+    solo_disponibles = request.query_params.get('solo_disponibles')
+    if solo_disponibles and solo_disponibles.lower() in {'1', 'true', 't', 'yes', 'si'}:
+        habitaciones = habitaciones.filter(
+            estado__in=ESTADOS_DISPONIBLES,
+            admision__isnull=True
+        )
+
+    habitaciones = habitaciones.order_by('area', 'codigo')
     paginator = CustomPageNumberPagination()
     resultado = paginator.paginate_queryset(habitaciones, request)
 
@@ -37,7 +54,16 @@ def listar_habitaciones(request):
 
 @api_view(['GET'])
 def listar_all_habitaciones(request):
-    habitaciones = Habitacion.objects.filter(is_active=True).order_by('area')
+    habitaciones = Habitacion.objects.filter(is_active=True)
+
+    solo_disponibles = request.query_params.get('solo_disponibles')
+    if solo_disponibles and solo_disponibles.lower() in {'1', 'true', 't', 'yes', 'si'}:
+        habitaciones = habitaciones.filter(
+            estado__in=ESTADOS_DISPONIBLES,
+            admision__isnull=True
+        )
+
+    habitaciones = habitaciones.order_by('area')
     serializer = HabitacionSerializer(habitaciones, many=True)
     return Response(serializer.data)
 

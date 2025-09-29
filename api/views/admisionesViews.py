@@ -128,9 +128,9 @@ def listar_admisiones_resumen(request):
             except (Seguros.DoesNotExist, ValueError):
                 aseguradora_nombre = f"ID {admision.datos_seguro.aseguradora}"
 
-        # 🔍 Buscar cama por ID plana (como ya hicimos antes)
-        habitacion_obj = None
-        if admision.habitacion:
+        # 🔍 Resolver habitación usando la FK cuando exista
+        habitacion_obj = admision.habitacion_fk
+        if not habitacion_obj and admision.habitacion:
             try:
                 habitacion_obj = Habitacion.objects.get(id=int(admision.habitacion))
             except (Habitacion.DoesNotExist, ValueError):
@@ -147,6 +147,7 @@ def listar_admisiones_resumen(request):
             "paciente": f"{nombre_completo} (NAC: {fecha_nac})",
             "identificacion": f"{paciente.tipo_identificacion or 'N/A'}: {paciente.numero_identificacion or 'N/A'}",
             "genero": paciente.genero or "N/D",
+            "tipo_sangre": paciente.tipo_sangre or "N/D",
             "aseguradora": aseguradora_nombre,
             "area": admision.area_admision or "N/D",
             "habitacion": habitacion_str,

@@ -5,6 +5,8 @@ from ..models.admisionesModel import (
     DatosLaborales, DatosSeguro, GarantiaPago, Admision,
     MovimientoCuenta
 )
+from ..models.habitacionModel import Habitacion
+from ..serializers.habitacionSerializer import HabitacionSerializer
 
 # 🔹 Serializers simples para cada modelo
 class PacienteSerializer(serializers.ModelSerializer):
@@ -52,6 +54,7 @@ class AdmisionDetalleSerializer(serializers.ModelSerializer):
     datos_seguro = DatosSeguroSerializer()
     garantia_pago = GarantiaPagoSerializer()
     acompanantes = AcompananteSerializer(many=True, read_only=True)  # ✅ ESTA LÍNEA AGREGA LOS ACOMPAÑANTES
+    habitacion_fk = HabitacionSerializer(read_only=True)
 
     class Meta:
         model = Admision
@@ -175,6 +178,32 @@ class AdmisionCreateSerializer(serializers.ModelSerializer):
             **validated_data
         )
 
+        habitacion_obj = None
+        habitacion_id = request_data.get('habitacion')
+        if habitacion_id:
+            try:
+                habitacion_obj = Habitacion.objects.get(id=int(habitacion_id))
+            except (Habitacion.DoesNotExist, ValueError, TypeError):
+                habitacion_obj = None
+
+        if habitacion_obj:
+            nombre_paciente = " ".join(filter(None, [
+                paciente.primer_nombre,
+                paciente.segundo_nombre,
+                paciente.primer_apellido,
+                paciente.segundo_apellido,
+                paciente.apellido_casada,
+            ])).strip() or None
+
+            habitacion_obj.estado = 'Ocupada Inspeccionada'
+            habitacion_obj.admision = admision
+            habitacion_obj.paciente = nombre_paciente
+            habitacion_obj.save(update_fields=['estado', 'admision', 'paciente'])
+
+            admision.habitacion_fk = habitacion_obj
+            admision.habitacion = str(habitacion_obj.id)
+            admision.save(update_fields=['habitacion_fk', 'habitacion'])
+
         # Guardar acompañantes después de crear la admisión
         acompanantes_data = request_data.get('acompanantes', [])
         for acompanante_data in acompanantes_data:
@@ -215,6 +244,15 @@ class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
             if key in data and data[key] is not None:
                 setattr(obj, field, data[key])
 
+        habitacion_actual = instance.habitacion_fk
+        nueva_habitacion = None
+        habitacion_id = data.get('habitacion')
+        if habitacion_id:
+            try:
+                nueva_habitacion = Habitacion.objects.get(id=int(habitacion_id))
+            except (Habitacion.DoesNotExist, ValueError, TypeError):
+                nueva_habitacion = None
+
         # Paciente
         paciente = instance.paciente
         actualizar_si_existe(paciente, 'primer_nombre', data, 'p_primer_nombre')
@@ -241,6 +279,14 @@ class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
         actualizar_si_existe(paciente, 'correo_factura', data, 'correoFactura')
         actualizar_si_existe(paciente, 'tipo_sangre', data, 'tipo_sangre')
         paciente.save()
+
+        nombre_paciente = " ".join(filter(None, [
+            paciente.primer_nombre,
+            paciente.segundo_nombre,
+            paciente.primer_apellido,
+            paciente.segundo_apellido,
+            paciente.apellido_casada,
+        ])).strip() or None
 
         # Actualizar o reemplazar acompañantes
         acompanantes_data = data.get('acompanantes', [])
@@ -355,6 +401,30 @@ class AdmisionUpdateFlatSerializer(serializers.ModelSerializer):
         actualizar_si_existe(instance, 'habitacion', data, 'habitacion')
         actualizar_si_existe(instance, 'medico_tratante', data, 'medicoTratante')
         instance.save()
+
+        if nueva_habitacion and nueva_habitacion != habitacion_actual:
+            if habitacion_actual:
+                habitacion_actual.estado = 'Vacante Inspeccionada -DISPONIBLE-'
+                habitacion_actual.admision = None
+                habitacion_actual.paciente = None
+                habitacion_actual.save(update_fields=['estado', 'admision', 'paciente'])
+
+            nueva_habitacion.estado = 'Ocupada Inspeccionada'
+            nueva_habitacion.admision = instance
+            nueva_habitacion.paciente = nombre_paciente
+            nueva_habitacion.save(update_fields=['estado', 'admision', 'paciente'])
+
+            instance.habitacion_fk = nueva_habitacion
+            instance.habitacion = str(nueva_habitacion.id)
+            instance.save(update_fields=['habitacion_fk', 'habitacion'])
+        elif habitacion_actual:
+            habitacion_actual.paciente = nombre_paciente
+            if habitacion_actual.estado != 'Ocupada Inspeccionada':
+                habitacion_actual.estado = 'Ocupada Inspeccionada'
+                habitacion_actual.save(update_fields=['paciente', 'estado'])
+            else:
+                habitacion_actual.save(update_fields=['paciente'])
+
         return instance
 
 class MovimientoCuentaSerializer(serializers.ModelSerializer):
