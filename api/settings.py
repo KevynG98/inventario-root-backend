@@ -1,6 +1,6 @@
-# settings.py
 from pathlib import Path
 import os
+import platform
 from dotenv import load_dotenv
 from corsheaders.defaults import default_headers
 
@@ -16,7 +16,7 @@ def env_csv(name: str, default: str = ""):
     return [x.strip() for x in raw.split(",") if x.strip()]
 
 # --- Toggle environment ---
-DEV = True  # <<< set True for local development
+DEV = True  # <<< set True for development, False for production
 
 if DEV:
     print("🌍 DEV MODE: Using SQL Server (hospitalpruebas)\n")
@@ -25,11 +25,11 @@ else:
 
 # --- ODBC driver & params (unified for DEV/PROD) ---
 ODBC_DRIVER = os.getenv("SQL_ODBC_DRIVER", "ODBC Driver 18 for SQL Server")
-ODBC_EXTRA  = os.getenv("DB_ODBC_EXTRA",  "Encrypt=yes;TrustServerCertificate=yes;")
+ODBC_EXTRA = os.getenv("DB_ODBC_EXTRA", "Encrypt=yes;TrustServerCertificate=yes;")
 
 # --- Secrets / Security ---
 if DEV:
-    SECRET_KEY = 'django-insecure-er(in23ikbn2fkn)ik9@yjj#1io1u+@%^*xnp(2%^0)473)9vy'
+    SECRET_KEY = 'django-insecure-dev-key'
     DEBUG = True
 
     ALLOWED_HOSTS = [
@@ -61,18 +61,22 @@ if DEV:
     ]
     CORS_ALLOW_HEADERS = list(default_headers) + ['x-user']
 
-    # Database (DEV)
+    # --- Base de datos (DEV con detección de entorno) ---
+    DB_HOST = os.getenv('DB_PRUEBAS_HOST', '172.25.146.246')
+    if platform.system() == 'Windows':
+        DB_HOST = '127.0.0.1'  # si lo corres directamente en Windows
+
     DATABASES = {
         'default': {
             'ENGINE': 'mssql',
-            'NAME': 'hospitalpruebas',
-            'USER': 'hospital_user',
-            'PASSWORD': 'ContraseñaSegura123!',
-            'HOST': '172.25.146.246',
-            'PORT': '1433',
+            'NAME': os.getenv('DB_PRUEBAS_NAME', 'hospitalpruebas'),
+            'USER': os.getenv('DB_PRUEBAS_USER', 'hospital_user'),
+            'PASSWORD': os.getenv('DB_PRUEBAS_PASSWORD', 'ContraseñaSegura123!'),
+            'HOST': DB_HOST,
+            'PORT': os.getenv('DB_PRUEBAS_PORT', '1433'),
             'OPTIONS': {
                 'driver': ODBC_DRIVER,
-                'extra_params': ODBC_EXTRA,  # e.g. Encrypt=yes;TrustServerCertificate=yes;
+                'extra_params': ODBC_EXTRA,
             },
         }
     }
@@ -81,25 +85,29 @@ else:
     SECRET_KEY = os.getenv('SECRET_KEY')
     DEBUG = False
 
-    # CORS / CSRF / Hosts (PROD via .env)
+    # --- CORS / CSRF / Hosts (PROD via .env) ---
     ALLOWED_HOSTS = env_csv('ALLOWED_HOSTS')
     CSRF_TRUSTED_ORIGINS = env_csv('CSRF_TRUSTED_ORIGINS')
     CORS_ALLOWED_ORIGINS = env_csv('CORS_ALLOWED_ORIGINS')
     CORS_ALLOW_CREDENTIALS = True
     CORS_ALLOW_HEADERS = list(default_headers) + ['x-user']
 
-    # Database (PROD via .env)
+    # --- Base de datos (PROD) ---
+    DB_HOST = os.getenv('DB_PROD_HOST', '172.25.146.246')
+    if platform.system() == 'Windows':
+        DB_HOST = '127.0.0.1'
+
     DATABASES = {
         'default': {
             'ENGINE': 'mssql',
             'NAME': os.getenv('DB_PROD_NAME'),
             'USER': os.getenv('DB_PROD_USER'),
             'PASSWORD': os.getenv('DB_PROD_PASSWORD'),
-            'HOST': os.getenv('DB_PROD_HOST'),
+            'HOST': DB_HOST,
             'PORT': os.getenv('DB_PROD_PORT', '1433'),
             'OPTIONS': {
-                'driver': ODBC_DRIVER,     # reads SQL_ODBC_DRIVER from .env
-                'extra_params': ODBC_EXTRA # reads DB_ODBC_EXTRA from .env (optional)
+                'driver': ODBC_DRIVER,
+                'extra_params': ODBC_EXTRA,
             },
         }
     }
