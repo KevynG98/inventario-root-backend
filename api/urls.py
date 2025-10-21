@@ -16,7 +16,7 @@ from drf_yasg import openapi  # type: ignore
 from .path import (
     inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl,
     admisionesUrl, habitacionesUrl, historialApiUrl, directorioUrl,
-    requisisionesUrl, mantenimientoUrl
+    requisisionesUrl, mantenimientoUrl, enfermeriaUrl
 )
 from .path.bodegasUrl import bodegasUrl
 from .path import comprasUrl
@@ -53,6 +53,7 @@ urlpatterns = [
     path('auditoria/', include(historialApiUrl)),
     path('bodegas/', include(bodegasUrl)),
     path('compras/', include(comprasUrl)),
+    path('enfermeria/', include(enfermeriaUrl)),
 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),

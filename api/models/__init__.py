@@ -23,3 +23,16 @@ from .cargaMasivaModel import (
     CargaMasivaPrecio,
     CargaMasivaPrecioItem,
 )
+from .enfermeriaModel import (
+    AdmisionMedicoTratante,
+    AntecedenteClinico,
+    ControlMedicamento,
+    ControlMedicamentoRegistro,
+    HistoriaEnfermedad,
+    NotaEnfermeria,
+    OrdenMedica,
+    OrdenMedicaEvento,
+    RegistroDieta,
+    SignoVitalEmergencia,
+    SignoVitalEncamamiento,
+)
