@@ -5,6 +5,7 @@ from ..models.enfermeriaModel import (
     AntecedenteClinico,
     ControlMedicamento,
     ControlMedicamentoRegistro,
+    EvolucionClinica,
     HistoriaEnfermedad,
     NotaEnfermeria,
     OrdenMedica,
@@ -185,6 +186,31 @@ class RegistroDietaSerializer(serializers.ModelSerializer):
             "registrado_en",
         ]
         read_only_fields = ("registrado_en",)
+
+
+class EvolucionClinicaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EvolucionClinica
+        fields = [
+            "id",
+            "admision",
+            "resumen",
+            "contenido",
+            "medico_nombre",
+            "medico_colegiado",
+            "creado_por_username",
+            "actualizado_por_username",
+            "creado_en",
+            "actualizado_en",
+        ]
+        read_only_fields = (
+            "medico_nombre",
+            "medico_colegiado",
+            "creado_por_username",
+            "actualizado_por_username",
+            "creado_en",
+            "actualizado_en",
+        )
 
 
 class OrdenMedicaEventoSerializer(serializers.ModelSerializer):

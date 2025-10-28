@@ -7,6 +7,7 @@ from ..views.enfermeriaViews import (
     ControlMedicamentoRegistroViewSet,
     ControlMedicamentoViewSet,
     HistoriaEnfermedadView,
+    EvolucionClinicaViewSet,
     NotaEnfermeriaViewSet,
     OrdenMedicaEventoViewSet,
     OrdenMedicaViewSet,
@@ -26,6 +27,7 @@ router.register(r"ordenes-medicas", OrdenMedicaViewSet, basename="enfermeria-ord
 router.register(r"ordenes-medicas-eventos", OrdenMedicaEventoViewSet, basename="enfermeria-ordenes-medicas-eventos")
 router.register(r"notas-enfermeria", NotaEnfermeriaViewSet, basename="enfermeria-notas")
 router.register(r"dietas", RegistroDietaViewSet, basename="enfermeria-dietas")
+router.register(r"evoluciones", EvolucionClinicaViewSet, basename="enfermeria-evoluciones")
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -30,6 +30,7 @@ from .enfermeriaModel import (
     ControlMedicamentoRegistro,
     HistoriaEnfermedad,
     NotaEnfermeria,
+    EvolucionClinica,
     OrdenMedica,
     OrdenMedicaEvento,
     RegistroDieta,

@@ -4,12 +4,14 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import PermissionDenied
 
 from ..models.enfermeriaModel import (
     AdmisionMedicoTratante,
     AntecedenteClinico,
     ControlMedicamento,
     ControlMedicamentoRegistro,
+    EvolucionClinica,
     HistoriaEnfermedad,
     NotaEnfermeria,
     OrdenMedica,
@@ -23,6 +25,7 @@ from ..serializers.enfermeriaSerializer import (
     AntecedenteClinicoSerializer,
     ControlMedicamentoRegistroSerializer,
     ControlMedicamentoSerializer,
+    EvolucionClinicaSerializer,
     HistoriaEnfermedadSerializer,
     NotaEnfermeriaSerializer,
     OrdenMedicaEventoSerializer,
@@ -192,6 +195,96 @@ class OrdenMedicaEventoViewSet(viewsets.ModelViewSet):
 class NotaEnfermeriaViewSet(AdmisionScopedViewSet):
     queryset = NotaEnfermeria.objects.all().order_by("-creado_en")
     serializer_class = NotaEnfermeriaSerializer
+
+
+def _user_roles(user):
+    if not user or not user.is_authenticated:
+        return []
+    roles_manager = getattr(user, "roles", None)
+    if roles_manager is None:
+        return []
+    return [role.name.upper() for role in roles_manager.all()]
+
+
+def _user_is_doctor(user):
+    if not user or not user.is_authenticated:
+        return False
+    perfil = getattr(user, "perfil", None)
+    if getattr(perfil, "es_medico", False):
+        return True
+    role_names = _user_roles(user)
+    return any("MEDICO" in name or "MÉDICO" in name or "DOCTOR" in name for name in role_names)
+
+
+def _build_doctor_metadata(request):
+    username = resolve_username(request)
+    full_name = None
+    colegiado = None
+    user = request.user if request.user.is_authenticated else None
+    if user:
+        full_name = user.get_full_name().strip() or None
+        perfil = getattr(user, "perfil", None)
+        if perfil:
+            if not full_name:
+                nombres = [
+                    perfil.primer_nombre,
+                    perfil.segundo_nombre,
+                    perfil.primer_apellido,
+                    perfil.segundo_apellido,
+                ]
+                full_name = " ".join(filter(None, nombres)).strip() or None
+            colegiado = perfil.colegiado or None
+    if not full_name:
+        full_name = request.headers.get("X-User-Name") or username
+    colegiado = colegiado or request.headers.get("X-User-Colegiado")
+    return username, full_name, colegiado
+
+
+def _normalize_identifier(value):
+    if not value:
+        return ""
+    return str(value).strip().lower()
+
+
+class EvolucionClinicaViewSet(AdmisionScopedViewSet):
+    queryset = EvolucionClinica.objects.all().order_by("-creado_en")
+    serializer_class = EvolucionClinicaSerializer
+
+    def _ensure_doctor(self):
+        if not _user_is_doctor(self.request.user):
+            raise PermissionDenied("Solo los médicos pueden gestionar evoluciones clínicas.")
+
+    def perform_create(self, serializer):
+        self._ensure_doctor()
+        username, nombre, colegiado = _build_doctor_metadata(self.request)
+        serializer.save(
+            creado_por_username=username,
+            actualizado_por_username=username,
+            medico_nombre=nombre,
+            medico_colegiado=colegiado,
+        )
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        username = resolve_username(self.request)
+        if instance.creado_por_username:
+            if _normalize_identifier(instance.creado_por_username) != _normalize_identifier(username):
+                raise PermissionDenied("Solo el médico que registró la evolución puede editarla.")
+        self._ensure_doctor()
+        _, nombre, colegiado = _build_doctor_metadata(self.request)
+        serializer.save(
+            actualizado_por_username=username,
+            medico_nombre=nombre or instance.medico_nombre,
+            medico_colegiado=colegiado or instance.medico_colegiado,
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        username = resolve_username(request)
+        if instance.creado_por_username and _normalize_identifier(instance.creado_por_username) != _normalize_identifier(username):
+            raise PermissionDenied("Solo el médico que registró la evolución puede eliminarla.")
+        self._ensure_doctor()
+        return super().destroy(request, *args, **kwargs)
 
 
 class RegistroDietaViewSet(AdmisionScopedViewSet):

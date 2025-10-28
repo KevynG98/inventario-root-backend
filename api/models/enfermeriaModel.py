@@ -293,6 +293,30 @@ class NotaEnfermeria(models.Model):
         return f"Nota {self.turno} ({self.estado})"
 
 
+class EvolucionClinica(models.Model):
+    admision = models.ForeignKey(
+        Admision,
+        on_delete=models.CASCADE,
+        related_name="evoluciones_clinicas"
+    )
+    resumen = models.CharField(max_length=255, blank=True, null=True)
+    contenido = models.TextField()
+    medico_nombre = models.CharField(max_length=255, blank=True, null=True)
+    medico_colegiado = models.CharField(max_length=100, blank=True, null=True)
+    creado_por_username = models.CharField(max_length=150, blank=True, null=True)
+    actualizado_por_username = models.CharField(max_length=150, blank=True, null=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Evolución clínica"
+        verbose_name_plural = "Evoluciones clínicas"
+        ordering = ("-creado_en",)
+
+    def __str__(self):
+        return f"Evolución {self.admision_id} - {self.creado_en:%Y-%m-%d %H:%M}"
+
+
 class RegistroDieta(models.Model):
     TIEMPOS = (
         ("DESAYUNO", "Desayuno"),

@@ -26,3 +26,5 @@ staticfiles/
 
 __pycache__/
 *.pyc
+
+api.svg
