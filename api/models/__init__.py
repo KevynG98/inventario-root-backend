@@ -36,4 +36,8 @@ from .enfermeriaModel import (
     RegistroDieta,
     SignoVitalEmergencia,
     SignoVitalEncamamiento,
+    IngestaExcretaDia,
+    IngestaExcretaRegistro,
+    SolicitudMedicamento,
+    SolicitudMedicamentoItem,
 )

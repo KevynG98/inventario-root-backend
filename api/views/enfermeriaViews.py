@@ -6,6 +6,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 
+from django.db import transaction
+from django.utils import timezone
+
 from ..models.enfermeriaModel import (
     AdmisionMedicoTratante,
     AntecedenteClinico,
@@ -19,7 +22,13 @@ from ..models.enfermeriaModel import (
     RegistroDieta,
     SignoVitalEmergencia,
     SignoVitalEncamamiento,
+    IngestaExcretaDia,
+    SolicitudMedicamento,
+    SolicitudMedicamentoItem,
 )
+from ..models.inventariosSkuModel import InventarioSKU, BodegaSKU
+from ..models.salidasModel import Salida, SalidaItem
+from ..models.trasladosModel import Traslado, TrasladoItem
 from ..serializers.enfermeriaSerializer import (
     AdmisionMedicoTratanteSerializer,
     AntecedenteClinicoSerializer,
@@ -33,6 +42,8 @@ from ..serializers.enfermeriaSerializer import (
     RegistroDietaSerializer,
     SignoVitalEmergenciaSerializer,
     SignoVitalEncamamientoSerializer,
+    IngestaExcretaDiaSerializer,
+    SolicitudMedicamentoSerializer,
 )
 
 
@@ -40,6 +51,153 @@ def resolve_username(request):
     if request.user and request.user.is_authenticated:
         return request.user.username
     return request.headers.get("X-User")
+
+
+def _obtener_sku(sku_code):
+    try:
+        return InventarioSKU.objects.get(codigo_sku=sku_code)
+    except InventarioSKU.DoesNotExist as exc:
+        raise PermissionDenied(f"El SKU {sku_code} no existe.") from exc
+
+
+def _ajustar_stock(origen, destino, sku_obj, cantidad):
+    if cantidad <= 0:
+        return
+    origen_stock = (
+        BodegaSKU.objects.select_for_update()
+        .filter(sku=sku_obj, nombre_bodega=origen)
+        .first()
+    )
+    if not origen_stock or origen_stock.cantidad < cantidad:
+        disponible = origen_stock.cantidad if origen_stock else 0
+        raise PermissionDenied(
+            f"Stock insuficiente en bodega {origen} para SKU {sku_obj.codigo_sku}. "
+            f"Disponible: {disponible}, requerido: {cantidad}"
+        )
+    origen_stock.cantidad = int(origen_stock.cantidad - cantidad)
+    origen_stock.save()
+
+    destino_stock, _ = BodegaSKU.objects.select_for_update().get_or_create(
+        sku=sku_obj,
+        nombre_bodega=destino,
+        defaults={"cantidad": 0},
+    )
+    destino_stock.cantidad = int(destino_stock.cantidad + cantidad)
+    destino_stock.save()
+
+
+def _crear_traslado_recibido(solicitud: SolicitudMedicamento, username: str):
+    ahora = timezone.now()
+    traslado = Traslado.objects.create(
+        bodega_origen=solicitud.bodega_origen,
+        bodega_destino=solicitud.bodega_destino,
+        comentarios=f"Traslado generado desde solicitud #{solicitud.pk}",
+        departamento=None,
+        enviado_por=solicitud.enviado_por or username,
+        entregamos_a=username,
+        recibido_por=username,
+        estatus="RECIBIDO",
+        fecha_envio=ahora,
+        fecha_recibido=ahora,
+    )
+
+    for item in solicitud.items.filter(devuelto=False):
+        cantidad = item.cantidad_recibida or item.cantidad_enviada or item.cantidad_pedida
+        if cantidad <= 0:
+            continue
+        sku_obj = _obtener_sku(item.sku)
+        _ajustar_stock(
+            solicitud.bodega_origen,
+            solicitud.bodega_destino,
+            sku_obj,
+            int(cantidad),
+        )
+        TrasladoItem.objects.create(
+            traslado=traslado,
+            sku=item.sku,
+            descripcion=item.descripcion or sku_obj.nombre,
+            cantidad=int(cantidad),
+        )
+
+    return traslado
+
+
+def _crear_traslado_enviado(origen, destino, items, username, departamento=None, entregamos_a=None):
+    traslado = Traslado.objects.create(
+        bodega_origen=origen,
+        bodega_destino=destino,
+        comentarios="Traslado generado automáticamente por enfermería",
+        departamento=departamento,
+        enviado_por=username,
+        entregamos_a=entregamos_a,
+        estatus="ENVIADO",
+        fecha_envio=timezone.now(),
+    )
+    for item in items:
+        sku_obj = _obtener_sku(item["sku"])
+        cantidad = int(item.get("cantidad") or 0)
+        if cantidad <= 0:
+            continue
+        origen_stock = (
+            BodegaSKU.objects.select_for_update()
+            .filter(sku=sku_obj, nombre_bodega=origen)
+            .first()
+        )
+        if not origen_stock or origen_stock.cantidad < cantidad:
+            disponible = origen_stock.cantidad if origen_stock else 0
+            raise PermissionDenied(
+                f"Stock insuficiente en {origen} para SKU {sku_obj.codigo_sku}. "
+                f"Disponible: {disponible}, requerido: {cantidad}."
+            )
+        origen_stock.cantidad = int(origen_stock.cantidad - cantidad)
+        origen_stock.save()
+        TrasladoItem.objects.create(
+            traslado=traslado,
+            sku=sku_obj.codigo_sku,
+            descripcion=item.get("descripcion") or sku_obj.nombre,
+            cantidad=cantidad,
+        )
+    return traslado
+
+
+def _crear_salida_paciente(solicitud: SolicitudMedicamento, items, username: str):
+    salida = Salida.objects.create(
+        bodega=solicitud.bodega_destino,
+        tipo_salida="paciente",
+        observaciones=f"Salida generada desde solicitud #{solicitud.pk}",
+        area=None,
+        admision=solicitud.admision_id,
+        usuario=username,
+        aplicado_por=username,
+    )
+    for item in items:
+        sku_obj = _obtener_sku(item["sku"])
+        cantidad = int(item["cantidad"])
+        bodega_stock = (
+            BodegaSKU.objects.select_for_update()
+            .filter(sku=sku_obj, nombre_bodega=solicitud.bodega_destino)
+            .first()
+        )
+        if not bodega_stock or bodega_stock.cantidad < cantidad:
+            disponible = bodega_stock.cantidad if bodega_stock else 0
+            raise PermissionDenied(
+                f"Stock insuficiente en {solicitud.bodega_destino} para SKU {sku_obj.codigo_sku}. "
+                f"Disponible: {disponible}, requerido: {cantidad}."
+            )
+        bodega_stock.cantidad = int(bodega_stock.cantidad - cantidad)
+        bodega_stock.save()
+
+        SalidaItem.objects.create(
+            salida=salida,
+            sku=sku_obj.codigo_sku,
+            descripcion=item.get("descripcion") or sku_obj.nombre,
+            cantidad=cantidad,
+            costo=0,
+            precio_sin_iva=0,
+            iva=0,
+            total=0,
+        )
+    return salida
 
 
 class AdmisionScopedViewSet(viewsets.ModelViewSet):
@@ -130,6 +288,266 @@ class AntecedenteClinicoViewSet(AdmisionScopedViewSet):
 class ControlMedicamentoViewSet(AdmisionScopedViewSet):
     queryset = ControlMedicamento.objects.all().order_by("-creado_en")
     serializer_class = ControlMedicamentoSerializer
+
+
+class SolicitudMedicamentoViewSet(AdmisionScopedViewSet):
+    queryset = SolicitudMedicamento.objects.all().order_by("-fecha_creacion")
+    serializer_class = SolicitudMedicamentoSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.prefetch_related("items")
+
+    @action(detail=True, methods=["post"], url_path="enviar")
+    def enviar(self, request, pk=None):
+        solicitud = self.get_object()
+        if solicitud.estatus != SolicitudMedicamento.Estados.PENDIENTE_ENVIAR:
+            return Response(
+                {"error": "Solo puedes enviar solicitudes pendientes de enviar."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not solicitud.items.exists():
+            return Response(
+                {"error": "Agrega al menos un SKU antes de enviar la solicitud."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        username = resolve_username(request)
+        solicitud.estatus = SolicitudMedicamento.Estados.ENVIADA
+        solicitud.fecha_envio = timezone.now()
+        solicitud.enviado_por = username
+        solicitud.actualizado_por = username
+        solicitud.save(update_fields=["estatus", "fecha_envio", "enviado_por", "actualizado_por", "fecha_actualizacion"])
+        return Response(self.get_serializer(solicitud).data)
+
+    @action(detail=True, methods=["post"], url_path="marcar-pendiente-recibir")
+    def marcar_pendiente_recibir(self, request, pk=None):
+        solicitud = self.get_object()
+        if solicitud.estatus not in (
+            SolicitudMedicamento.Estados.ENVIADA,
+            SolicitudMedicamento.Estados.PENDIENTE_RECIBIR,
+        ):
+            return Response(
+                {"error": "Solo puedes marcar solicitudes enviadas como pendientes de recibir."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        solicitud.estatus = SolicitudMedicamento.Estados.PENDIENTE_RECIBIR
+        solicitud.save(update_fields=["estatus", "fecha_actualizacion"])
+        return Response(self.get_serializer(solicitud).data)
+
+    @action(detail=True, methods=["post"], url_path="recibir")
+    @transaction.atomic
+    def recibir(self, request, pk=None):
+        solicitud = self.get_object()
+        if solicitud.estatus not in (
+            SolicitudMedicamento.Estados.ENVIADA,
+            SolicitudMedicamento.Estados.PENDIENTE_RECIBIR,
+        ):
+            return Response(
+                {"error": "La solicitud debe estar Enviada o Pendiente de Recibir."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if solicitud.traslado_recibo_id:
+            return Response(
+                {"error": "Esta solicitud ya tiene un traslado registrado."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        items_payload = request.data.get("items", [])
+        payload_map = {item.get("id"): item for item in items_payload if item.get("id")}
+        items = list(solicitud.items.filter(devuelto=False))
+        if not items:
+            return Response({"error": "No hay ítems para recibir."}, status=status.HTTP_400_BAD_REQUEST)
+
+        for item in items:
+            data = payload_map.get(item.id, {})
+            marcado = data.get("recibido", True)
+            cantidad = int(data.get("cantidad_recibida", item.cantidad_enviada or item.cantidad_pedida or 0))
+            if not marcado:
+                return Response({"error": f"Debes marcar el SKU {item.sku} como recibido."}, status=status.HTTP_400_BAD_REQUEST)
+            if cantidad <= 0:
+                return Response({"error": f"La cantidad recibida para {item.sku} debe ser mayor a cero."}, status=status.HTTP_400_BAD_REQUEST)
+            item.cantidad_recibida = cantidad
+            if item.cantidad_enviada == 0:
+                item.cantidad_enviada = cantidad
+            item.recibido = True
+            item.save(update_fields=["cantidad_recibida", "cantidad_enviada", "recibido", "actualizado_en"])
+
+        username = resolve_username(request)
+        traslado = _crear_traslado_recibido(solicitud, username or solicitud.recibido_por or solicitud.enviado_por or "Sistema")
+        solicitud.estatus = SolicitudMedicamento.Estados.RECIBIDA
+        solicitud.recibido_por = username
+        solicitud.fecha_recibido = timezone.now()
+        solicitud.traslado_recibo = traslado
+        solicitud.actualizado_por = username
+        solicitud.save(
+            update_fields=[
+                "estatus",
+                "recibido_por",
+                "fecha_recibido",
+                "traslado_recibo",
+                "actualizado_por",
+                "fecha_actualizacion",
+            ]
+        )
+        return Response(self.get_serializer(solicitud).data)
+
+    @action(detail=True, methods=["post"], url_path="cargar-estado-cuenta")
+    @transaction.atomic
+    def cargar_estado_cuenta(self, request, pk=None):
+        solicitud = self.get_object()
+        if solicitud.estatus != SolicitudMedicamento.Estados.RECIBIDA:
+            return Response(
+                {"error": "Solo las solicitudes recibidas pueden cargarse al estado de cuenta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if solicitud.salida_cuenta_id:
+            return Response(
+                {"error": "Esta solicitud ya se cargó al estado de cuenta."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        items = []
+        for item in solicitud.items.filter(devuelto=False):
+            cantidad = int(item.cantidad_recibida - item.cantidad_devuelta)
+            if cantidad <= 0:
+                continue
+            items.append({"sku": item.sku, "descripcion": item.descripcion, "cantidad": cantidad})
+        if not items:
+            return Response({"error": "No hay ítems disponibles para cargar al estado de cuenta."}, status=status.HTTP_400_BAD_REQUEST)
+        username = resolve_username(request)
+        salida = _crear_salida_paciente(solicitud, items, username or solicitud.cargado_por or solicitud.recibido_por or "Sistema")
+        solicitud.estatus = SolicitudMedicamento.Estados.CARGADA_EC
+        solicitud.salida_cuenta = salida
+        solicitud.cargado_por = username
+        solicitud.fecha_cargado_ec = timezone.now()
+        solicitud.actualizado_por = username
+        solicitud.save(
+            update_fields=[
+                "estatus",
+                "salida_cuenta",
+                "cargado_por",
+                "fecha_cargado_ec",
+                "actualizado_por",
+                "fecha_actualizacion",
+            ]
+        )
+        return Response(self.get_serializer(solicitud).data)
+
+    @action(detail=True, methods=["post"], url_path="anular")
+    @transaction.atomic
+    def anular(self, request, pk=None):
+        solicitud = self.get_object()
+        if solicitud.estatus == SolicitudMedicamento.Estados.CARGADA_EC:
+            return Response({"error": "No es posible anular una solicitud ya cargada al estado de cuenta."}, status=status.HTTP_400_BAD_REQUEST)
+        username = resolve_username(request)
+        items = []
+        if solicitud.estatus == SolicitudMedicamento.Estados.RECIBIDA:
+            for item in solicitud.items.filter(devuelto=False):
+                cantidad = int(item.cantidad_recibida - item.cantidad_devuelta)
+                if cantidad <= 0:
+                    continue
+                items.append(
+                    {
+                        "sku": item.sku,
+                        "descripcion": item.descripcion,
+                        "cantidad": cantidad,
+                    }
+                )
+            if items:
+                traslado = _crear_traslado_enviado(
+                    solicitud.bodega_destino,
+                    solicitud.bodega_origen,
+                    items,
+                    username or "Sistema",
+                    departamento=request.data.get("departamento"),
+                    entregamos_a=request.data.get("entregamos_a"),
+                )
+                solicitud.traslado_recibo = traslado
+
+        solicitud.estatus = SolicitudMedicamento.Estados.ANULADA
+        solicitud.actualizado_por = username
+        solicitud.save(update_fields=["estatus", "traslado_recibo", "actualizado_por", "fecha_actualizacion"])
+        return Response(self.get_serializer(solicitud).data)
+
+    @action(detail=True, methods=["post"], url_path="items/(?P<item_id>[^/.]+)/devolver")
+    @transaction.atomic
+    def devolver_item(self, request, pk=None, item_id=None):
+        solicitud = self.get_object()
+        if solicitud.estatus not in (
+            SolicitudMedicamento.Estados.RECIBIDA,
+            SolicitudMedicamento.Estados.CARGADA_EC,
+        ):
+            return Response(
+                {"error": "Solo puedes devolver ítems de solicitudes recibidas."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            item = solicitud.items.get(pk=item_id)
+        except SolicitudMedicamentoItem.DoesNotExist:
+            return Response({"error": "Ítem no encontrado."}, status=status.HTTP_404_NOT_FOUND)
+        if item.devuelto:
+            return Response({"error": "Este ítem ya fue devuelto."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cantidad = int(request.data.get("cantidad", item.cantidad_recibida))
+        if cantidad <= 0:
+            return Response({"error": "La cantidad a devolver debe ser mayor a cero."}, status=status.HTTP_400_BAD_REQUEST)
+        disponible = int(item.cantidad_recibida - item.cantidad_devuelta)
+        if cantidad > disponible:
+            return Response({"error": f"La cantidad supera lo recibido. Disponible para devolver: {disponible}."}, status=status.HTTP_400_BAD_REQUEST)
+
+        username = resolve_username(request)
+        traslado = _crear_traslado_enviado(
+            solicitud.bodega_destino,
+            solicitud.bodega_origen,
+            [
+                {
+                    "sku": item.sku,
+                    "descripcion": item.descripcion,
+                    "cantidad": cantidad,
+                }
+            ],
+            username or "Sistema",
+            departamento=request.data.get("departamento"),
+            entregamos_a=request.data.get("entregamos_a"),
+        )
+
+        item.cantidad_devuelta = item.cantidad_devuelta + cantidad
+        if item.cantidad_devuelta >= item.cantidad_recibida:
+            item.devuelto = True
+        item.traslado_devolucion = traslado
+        item.devuelto_en = timezone.now()
+        item.devuelto_por = username
+        item.usuario_traslado_devolucion = request.data.get("entregamos_a")
+        item.departamento_traslado_devolucion = request.data.get("departamento")
+        item.save(
+            update_fields=[
+                "cantidad_devuelta",
+                "devuelto",
+                "traslado_devolucion",
+                "devuelto_en",
+                "devuelto_por",
+                "usuario_traslado_devolucion",
+                "departamento_traslado_devolucion",
+                "actualizado_en",
+            ]
+        )
+
+        return Response(self.get_serializer(solicitud).data)
+
+
+class IngestaExcretaViewSet(AdmisionScopedViewSet):
+    queryset = IngestaExcretaDia.objects.all().order_by("-fecha", "-creado_en")
+    serializer_class = IngestaExcretaDiaSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.prefetch_related("registros")
+
+    def perform_create(self, serializer):
+        super().perform_create(serializer)
+        serializer.instance.ensure_registros()
+
+    def perform_update(self, serializer):
+        super().perform_update(serializer)
+        serializer.instance.ensure_registros()
 
 
 class ControlMedicamentoRegistroViewSet(viewsets.ModelViewSet):
