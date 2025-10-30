@@ -101,6 +101,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'api.apps.ApiConfig',
     'django_extensions',
+    'operaciones.apps.OperacionesConfig',
+    'solicitudes.apps.SolicitudesConfig',
 ]
 
 REST_FRAMEWORK = {
