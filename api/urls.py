@@ -13,13 +13,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view  # type: ignore
 from drf_yasg import openapi  # type: ignore
 
-from .path import (
-    inventarioUrl, userUrl, rolesUrl, customerUrl, utilsUrl,
-    admisionesUrl, habitacionesUrl, historialApiUrl, directorioUrl,
-    requisisionesUrl, mantenimientoUrl, enfermeriaUrl
-)
-from .path.bodegasUrl import bodegasUrl
-from .path import comprasUrl
+from .path import inventarioUrl, userUrl, historialApiUrl, rolesUrl, mantenimientoUrl, bodegasUrl, admisionesUrl
 
 
 def get_csrf(request):
@@ -28,9 +22,9 @@ def get_csrf(request):
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="API del Hospital",
+        title="API Inventario General",
         default_version='v1',
-        description="Documentación de la API con Swagger",
+        description="Documentación del sistema Inventario General",
         contact=openapi.Contact(email="soporte@ejemplo.com"),
         license=openapi.License(name="MIT License"),
     ),
@@ -43,19 +37,12 @@ urlpatterns = [
     path('', lambda request: redirect('schema-swagger-ui', permanent=False)),
     path('csrf/', get_csrf, name='csrf'),
     path('user/', include(userUrl)),
-    path('rol/', include(rolesUrl)),
-    path('admisiones/', include(admisionesUrl)),
-    path('habitaciones/', include(habitacionesUrl)),
     path('inventario/', include(inventarioUrl)),
-    path('directorio-extensiones/', include(directorioUrl)),
-    path('requisisiones/', include(requisisionesUrl)),
-    path('mantenimiento/', include(mantenimientoUrl)),
     path('auditoria/', include(historialApiUrl)),
+    path('rol/', include(rolesUrl)),
+    path('mantenimiento/', include(mantenimientoUrl)),
     path('bodegas/', include(bodegasUrl)),
-    path('compras/', include(comprasUrl)),
-    path('enfermeria/', include(enfermeriaUrl)),
-    path('operaciones/', include('operaciones.urls')),
-    path('solicitudes/', include('solicitudes.urls')),
+    path('admisiones/', include(admisionesUrl)),
 
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),

@@ -99,7 +99,7 @@ def exportar_historial_pdf(request):
         'usuario__username', 'endpoint', 'metodo', 'fecha', 'descripcion'
     ))
 
-    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'el-naranjo.png')
+    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'inventario-general.png')
 
     filtros = {
         'módulo': modulo or 'Todos',
@@ -137,7 +137,7 @@ def exportar_usuarios_pdf(request):
         'id', 'username', 'first_name', 'last_name', 'email', 'is_active'
     ))
 
-    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'el-naranjo.png')
+    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'inventario-general.png')
 
     html_string = render_to_string('reporte_usuarios.html', {
         'usuarios': data,
@@ -171,7 +171,7 @@ def exportar_skus_pdf(request):
         for sku in skus
     ]
 
-    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'el-naranjo.png')
+    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'inventario-general.png')
 
     html_string = render_to_string('reporte_inventario.html', {
         'skus': data,

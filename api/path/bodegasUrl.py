@@ -7,10 +7,13 @@ from ..views.salidasViews import (
     listar_salidas, crear_salida, obtener_salida,
 )
 from ..views.trasladosViews import (
-    listar_traslados, crear_traslado, obtener_traslado, recibir_traslado, anular_traslado,
+    listar_traslados, crear_traslado, obtener_traslado,
+    recibir_traslado, anular_traslado,
 )
 
-bodegasUrl = ([
+app_name = 'bodegas'
+
+urlpatterns = [
     # Entradas
     path('entradas/', listar_entradas, name='listar_entradas'),
     path('entradas/crear/', crear_entrada, name='crear_entrada'),
@@ -30,4 +33,4 @@ bodegasUrl = ([
     path('traslados/<int:pk>/', obtener_traslado, name='obtener_traslado'),
     path('traslados/<int:pk>/recibir/', recibir_traslado, name='recibir_traslado'),
     path('traslados/<int:pk>/anular/', anular_traslado, name='anular_traslado'),
-], 'bodegas')
+]

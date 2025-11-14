@@ -435,8 +435,8 @@ def descargar_pdf_orden_compra(request, id: int):
         "fecha_impresion": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         "proveedor": proveedor_ctx,
         "facturar_a": {
-            "nombre": "Servicios Medicos Integrados el Naranjo,S.A.",
-            "direccion": "Bulevar El Naranjo 22-40, Colonia El Naranjo Zona 4 de Mixco, Guatemala Ciudad",
+            "nombre": "Inventario General S.A.",
+            "direccion": "Bodega Central, Guatemala Ciudad",
             "nit": "66784395",
         },
         "forma_pago": ("Crédito" if oc.condiciones_pago == 'CREDITO' else ("Contado" if oc.condiciones_pago == 'CONTADO' else None)),

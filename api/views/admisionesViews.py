@@ -223,7 +223,7 @@ def generar_estado_cuenta_pdf(request, admision_id):
     agrupado_lista = list(agrupado.items())
 
     # ✅ Ruta absoluta al logo
-    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'el-naranjo.png')
+    logo_path = os.path.join(settings.BASE_DIR, 'api', 'static', 'img', 'inventario-general.png')
 
     html_string = render_to_string('estado_cuenta.html', {
         'data': data,

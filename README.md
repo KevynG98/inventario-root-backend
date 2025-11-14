@@ -1,2 +1,2 @@
 # SHEN---BackEnd
-Sistema Hospitalario El Naranjo
+Inventario General

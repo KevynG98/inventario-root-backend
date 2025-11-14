@@ -24,7 +24,7 @@ else:
     NETWORK = "local"
 
 print(f"🌐 Network: {NETWORK.upper()} | Host IP: {hostname_ip}")
-print("💾 Base activa:", "hospitalpruebas" if DEV else "hospitalproduccion")
+print("💾 Base activa:", "inventariopruebas" if DEV else "inventarioproduccion")
 
 # ======================================================
 # 🔐 SECRET / DEBUG
@@ -73,17 +73,31 @@ else:
     DB_HOST = os.getenv("DB_PROD_HOST")
     DB_PORT = os.getenv("DB_PROD_PORT")
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "mssql",
+#         "NAME": DB_NAME,
+#         "USER": DB_USER,
+#         "PASSWORD": DB_PASS,
+#         "HOST": DB_HOST,
+#         "PORT": DB_PORT,
+#         "OPTIONS": {
+#             "driver": ODBC_DRIVER,
+#             "extra_params": "Encrypt=yes;TrustServerCertificate=yes;"
+#         },
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "mssql",
-        "NAME": DB_NAME,
-        "USER": DB_USER,
-        "PASSWORD": DB_PASS,
-        "HOST": DB_HOST,
-        "PORT": DB_PORT,
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.getenv("DB_PRUEBAS_NAME"),
+        "USER": os.getenv("DB_PRUEBAS_USER"),
+        "PASSWORD": os.getenv("DB_PRUEBAS_PASSWORD"),
+        "HOST": os.getenv("DB_PRUEBAS_HOST"),
+        "PORT": os.getenv("DB_PRUEBAS_PORT"),
         "OPTIONS": {
-            "driver": ODBC_DRIVER,
-            "extra_params": "Encrypt=yes;TrustServerCertificate=yes;"
+            "ssl": {'ssl-mode': 'REQUIRED'},  # obligatorio en Aiven
         },
     }
 }
