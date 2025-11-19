@@ -108,15 +108,15 @@ class AuditoriaMiddleware:
                         descripcion = f"Se eliminó una bodega con ID {path.rstrip('/').split('/')[-1]}"
 
                     # SKUs
-                    elif path.startswith('/inventario/skus-crear') and metodo == 'POST':
+                    elif path.startswith('/inventario/productos-crear') and metodo == 'POST':
                         descripcion = f"Se creó un SKU con código '{data.get('codigo_sku', 'N/A')}'"
-                    elif path.startswith('/inventario/skus-actualizar') and metodo == 'PUT':
+                    elif path.startswith('/inventario/productos-actualizar') and metodo == 'PUT':
                         descripcion = f"Se actualizó el SKU con ID {path.rstrip('/').split('/')[-1]}"
-                    elif path.startswith('/inventario/skus-eliminar') and metodo == 'DELETE':
+                    elif path.startswith('/inventario/productos-eliminar') and metodo == 'DELETE':
                         descripcion = f"Se eliminó el SKU con ID {path.rstrip('/').split('/')[-1]}"
 
                     # Movimiento entre bodegas
-                    elif path.startswith('/inventario/skus/mover/') and metodo == 'POST':
+                    elif path.startswith('/inventario/productos/mover/') and metodo == 'POST':
                         from api.models import InventarioSKU
                         sku_id = data.get('sku')
                         nombre_sku = 'N/A'

@@ -96,9 +96,7 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PRUEBAS_PASSWORD"),
         "HOST": os.getenv("DB_PRUEBAS_HOST"),
         "PORT": os.getenv("DB_PRUEBAS_PORT"),
-        "OPTIONS": {
-            "ssl": {'ssl-mode': 'REQUIRED'},  # obligatorio en Aiven
-        },
+        # Puedes reactivar SSL si tu proveedor lo exige. Conexión sin opciones para depurar.
     }
 }
 

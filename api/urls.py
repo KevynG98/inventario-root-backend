@@ -13,7 +13,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view  # type: ignore
 from drf_yasg import openapi  # type: ignore
 
-from .path import inventarioUrl, userUrl, historialApiUrl, rolesUrl, mantenimientoUrl, bodegasUrl, admisionesUrl
+from .path import inventarioUrl, userUrl
 
 
 def get_csrf(request):
@@ -38,12 +38,6 @@ urlpatterns = [
     path('csrf/', get_csrf, name='csrf'),
     path('user/', include(userUrl)),
     path('inventario/', include(inventarioUrl)),
-    path('auditoria/', include(historialApiUrl)),
-    path('rol/', include(rolesUrl)),
-    path('mantenimiento/', include(mantenimientoUrl)),
-    path('bodegas/', include(bodegasUrl)),
-    path('admisiones/', include(admisionesUrl)),
-
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),

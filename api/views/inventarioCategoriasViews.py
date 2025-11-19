@@ -81,3 +81,31 @@ def crear_subcategoria(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(method='put', tags=['Inventario - Subcategorías'], operation_description="Actualizar una subcategoría por ID", request_body=SubcategoriaSerializer)
+@api_view(['PUT'])
+def actualizar_subcategoria(request, pk):
+    try:
+        subcategoria = SubcategoriaInventario.objects.get(pk=pk)
+    except SubcategoriaInventario.DoesNotExist:
+        return Response({'error': 'Subcategoría no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = SubcategoriaSerializer(subcategoria, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@swagger_auto_schema(method='delete', tags=['Inventario - Subcategorías'], operation_description="Eliminar (soft delete) una subcategoría por ID")
+@api_view(['DELETE'])
+def eliminar_subcategoria(request, pk):
+    try:
+        subcategoria = SubcategoriaInventario.objects.get(pk=pk)
+    except SubcategoriaInventario.DoesNotExist:
+        return Response({'error': 'Subcategoría no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+
+    subcategoria.is_active = False
+    subcategoria.save()
+    return Response({'mensaje': 'Subcategoría eliminada correctamente'}, status=status.HTTP_204_NO_CONTENT)
