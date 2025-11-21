@@ -107,25 +107,25 @@ class AuditoriaMiddleware:
                     elif path.startswith('/inventario/bodegas-eliminar') and metodo == 'DELETE':
                         descripcion = f"Se eliminó una bodega con ID {path.rstrip('/').split('/')[-1]}"
 
-                    # SKUs
+                    # Inventario (productos)
                     elif path.startswith('/inventario/productos-crear') and metodo == 'POST':
-                        descripcion = f"Se creó un SKU con código '{data.get('codigo_sku', 'N/A')}'"
+                        descripcion = f"Se creó un inventario con código '{data.get('codigo_inventario', 'N/A')}'"
                     elif path.startswith('/inventario/productos-actualizar') and metodo == 'PUT':
-                        descripcion = f"Se actualizó el SKU con ID {path.rstrip('/').split('/')[-1]}"
+                        descripcion = f"Se actualizó el inventario con ID {path.rstrip('/').split('/')[-1]}"
                     elif path.startswith('/inventario/productos-eliminar') and metodo == 'DELETE':
-                        descripcion = f"Se eliminó el SKU con ID {path.rstrip('/').split('/')[-1]}"
+                        descripcion = f"Se eliminó el inventario con ID {path.rstrip('/').split('/')[-1]}"
 
                     # Movimiento entre bodegas
                     elif path.startswith('/inventario/productos/mover/') and metodo == 'POST':
-                        from api.models import InventarioSKU
-                        sku_id = data.get('sku')
-                        nombre_sku = 'N/A'
+                        from api.models import InventarioProducto
+                        inventario_id = data.get('inventario')
+                        nombre_inventario = 'N/A'
                         try:
-                            nombre_sku = InventarioSKU.objects.get(id=sku_id).nombre
-                        except InventarioSKU.DoesNotExist:
+                            nombre_inventario = InventarioProducto.objects.get(id=inventario_id).nombre
+                        except InventarioProducto.DoesNotExist:
                             pass
                         descripcion = (
-                            f"Se movieron {data.get('cantidad', 0)} unidades del producto '{nombre_sku}' "
+                            f"Se movieron {data.get('cantidad', 0)} unidades del producto '{nombre_inventario}' "
                             f"de '{data.get('bodega_origen', 'N/A')}' a '{data.get('bodega_destino', 'N/A')}'"
                         )
 

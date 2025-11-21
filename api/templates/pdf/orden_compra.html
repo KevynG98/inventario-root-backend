@@ -206,7 +206,7 @@
       <thead>
         <tr>
           <th class="center" style="width:40px;">No.</th>
-          <th style="width:110px;">Código SKU</th>
+          <th style="width:110px;">Código Inventario</th>
           <th>Descripción</th>
           <th class="center" style="width:70px;">Cantidad</th>
           <th class="center" style="width:90px;">Unidad</th>
@@ -219,7 +219,7 @@
         {% for item in orden.items %}
         <tr>
           <td class="center">{{ forloop.counter|stringformat:"04d" }}</td>
-          <td>{{ item.codigo_sku }}</td>
+          <td>{{ item.codigo_inventario }}</td>
           <td>{{ item.descripcion }}</td>
           <td class="center">{{ item.cantidad }}</td>
           <td class="center">{{ item.unidad_medida }}</td>

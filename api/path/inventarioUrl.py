@@ -32,7 +32,7 @@ from ..views.inventarioSegurosView import (
     eliminar_seguros,
     obtener_seguros,
 )
-from ..views.inventarioPrecioSkuView import (
+from ..views.inventarioPrecioView import (
     listar_precios,
     crear_precio,
     actualizar_precio,
