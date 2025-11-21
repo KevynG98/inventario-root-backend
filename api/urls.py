@@ -13,7 +13,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view  # type: ignore
 from drf_yasg import openapi  # type: ignore
 
-from .path import inventarioUrl, userUrl
+from .path import inventarioUrl, userUrl, rolUrl
 
 
 def get_csrf(request):
@@ -37,6 +37,7 @@ urlpatterns = [
     path('', lambda request: redirect('schema-swagger-ui', permanent=False)),
     path('csrf/', get_csrf, name='csrf'),
     path('user/', include(userUrl)),
+    path('rol/', include(rolUrl)),
     path('inventario/', include(inventarioUrl)),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
