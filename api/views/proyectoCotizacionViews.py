@@ -12,6 +12,8 @@ from ..models.proyectoModel import Proyectos
 from ..serializers.proyectoSerializer import ProyectoSerializer
 from ..models.detalleProyectoModel import DetalleProyectos
 from ..serializers.detalleProyectoSerializer import DetalleProyectoSerializer
+from django.db.models import Q
+
 
 from api.utils.pagination import CustomPageNumberPagination
 
@@ -22,7 +24,7 @@ def listar_cotizaciones(request):
     """
     Lista todas las cotizaciones activas.
     """
-    proyectos = Proyectos.objects.filter(estatusProyecto=0)
+    proyectos = Proyectos.objects.filter(Q(estatusProyecto=0) | Q(estatusProyecto = 1)).order_by('id')
     paginator = CustomPageNumberPagination()
     result_page = paginator.paginate_queryset(proyectos, request)
 
@@ -84,14 +86,14 @@ def actualizar_cotizacion(request, pk):
     print("❌ Errores del serializer:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@swagger_auto_schema(method='get', request_body=ProyectoSerializer, operation_summary="Cotización/Proyecto rechazado", tags=["proyectos"])
-@api_view(['get'])
+@swagger_auto_schema(method='put', request_body=ProyectoSerializer, operation_summary="Cotización/Proyecto rechazado", tags=["proyectos"])
+@api_view(['PUT'])
 def cotización_cancelada(request, pk):
     """
     Rechaza proyecto o cotización por id.
     """
     try:
-        proyecto = Proyectos.objects.get(pk=pk, is_active=True)
+        proyecto = Proyectos.objects.get(pk=pk)
     except Proyectos.DoesNotExist:
         return Response({"error": "Cotización no encontrada"}, status=status.HTTP_404_NOT_FOUND)
 
