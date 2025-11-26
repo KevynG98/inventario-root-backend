@@ -4,4 +4,4 @@ from ..models.inventarioPrecioModel import PrecioInventario
 class PrecioInventarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = PrecioInventario
-        fields = '__all__'
+        fields = '__all__' 

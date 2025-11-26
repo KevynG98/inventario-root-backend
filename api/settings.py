@@ -49,7 +49,9 @@ elif NETWORK == "zerotier":
     ]
 else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-    CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ALLOWED_ORIGINS = ["http://localhost:3000", 
+                            "http://127.0.0.1:3000",
+                            "http://localhost:5173"]
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOW_CREDENTIALS = True
