@@ -31,6 +31,19 @@ def listar_cotizaciones(request):
     serializer = ProyectoSerializer(result_page, many=True)
     return Response(serializer.data)
 
+@swagger_auto_schema(method='get', operation_summary="Listar Cotizaciones", tags=["proyectos"])
+@api_view(['GET'])
+def listar_cotizaciones_rechazadas(request):
+    """
+    Lista todas las cotizaciones activas.
+    """
+    proyectos = Proyectos.objects.filter(Q(estatusProyecto=2)).order_by('id')
+    paginator = CustomPageNumberPagination()
+    result_page = paginator.paginate_queryset(proyectos, request)
+
+    serializer = ProyectoSerializer(result_page, many=True)
+    return Response(serializer.data)
+
 @swagger_auto_schema(
     method='get',
     operation_summary="Listar productos asociados a un proyecto",
@@ -86,21 +99,104 @@ def actualizar_cotizacion(request, pk):
     print("❌ Errores del serializer:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@swagger_auto_schema(method='put', request_body=ProyectoSerializer, operation_summary="Cotización/Proyecto rechazado", tags=["proyectos"])
+@swagger_auto_schema(
+    method='put',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'id': openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description='ID del proyecto/cotización a rechazar',
+            ),
+        },
+        required=['id'],
+    ),
+    operation_summary="Cotización/Proyecto rechazado",
+    tags=["proyectos"],
+)
 @api_view(['PUT'])
-def cotización_cancelada(request, pk):
-    """
-    Rechaza proyecto o cotización por id.
-    """
-    try:
-        proyecto = Proyectos.objects.get(pk=pk)
-    except Proyectos.DoesNotExist:
-        return Response({"error": "Cotización no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+def cotización_cancelada(request):
+    """Rechaza un proyecto o cotización cambiando su estatus a 2 (RECHAZADO).
 
-    print("🔍 Datos recibidos:", request.data)
-    serializer = ProyectoSerializer(proyecto, data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data)
-    print("❌ Errores del serializer:", serializer.errors)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    Body esperado: 
+    {
+        "id": number
+    }
+    """
+    proyecto_id = request.data.get('id')
+
+    if proyecto_id is None:
+        return Response(
+            {"error": "El campo 'id' es requerido."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        proyecto = Proyectos.objects.get(pk=proyecto_id)
+    except Proyectos.DoesNotExist:
+        return Response(
+            {"error": "Cotización no encontrada"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Cambiar el estatus del proyecto a RECHAZADO (2)
+    proyecto.estatusProyecto = Proyectos.RECHAZADO
+    proyecto.save()
+
+    serializer = ProyectoSerializer(proyecto)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@swagger_auto_schema(
+    method='put',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'id': openapi.Schema(
+                type=openapi.TYPE_INTEGER,
+                description='ID del proyecto/aprobarcotizacion a aprobar',
+            ),
+        },
+        required=['id'],
+    ),
+    operation_summary="Cotización/Proyecto Aprobado",
+    tags=["proyectos"],
+)
+@api_view(['PUT'])
+def cotizacion_aprobada(request):
+    """Aprueba un proyecto o cotización cambiando su estatus a 3 (ACEPTADO).
+
+    Body esperado: 
+    {
+        "id": number
+    }
+    """    
+    proyecto_id = request.data.get('id')
+    
+    
+    try:
+        proyecto = Proyectos.objects.get(pk=proyecto_id)
+    except Proyectos.DoesNotExist:
+        return Response(
+            {"error": "Cotización no encontrada"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if proyecto_id is None:
+        return Response(
+            {"error": "El campo 'id' es requerido."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    elif proyecto.estatusProyecto == "2":
+        return Response(
+            {"error": "El ID '2' no es válido para aprobar una cotización."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+
+
+    # Cambiar el estatus del proyecto a ACEPTADO (3)
+    proyecto.estatusProyecto = Proyectos.ACEPTADO
+    proyecto.save()
+
+    serializer = ProyectoSerializer(proyecto)
+    return Response(serializer.data, status=status.HTTP_200_OK)

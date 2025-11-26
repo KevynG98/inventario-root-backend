@@ -3,8 +3,9 @@ from ..views.proyectoCotizacionViews import (
     crear_cotizacion,
     listar_productos_por_proyecto,
     listar_cotizaciones,
-    cotización_cancelada
-    
+    cotización_cancelada,
+    cotizacion_aprobada,
+    listar_cotizaciones_rechazadas
 )
 
 urlpatterns = [
@@ -12,5 +13,6 @@ urlpatterns = [
     path('proyectos-crear/', crear_cotizacion, name='crear_cotizacion'),
     path('listar-productos/<int:proyecto_id>/', listar_productos_por_proyecto, name='listar_productos_por_proyecto'),
     path('proyectos/rechaza-cotizacion', cotización_cancelada, name='rechaza_cotizacion'), 
-    
+    path('aprueba-cotizacion', cotizacion_aprobada, name='aprueba_cotizacion'),
+    path('cotizaciones-rechazadas/', listar_cotizaciones_rechazadas, name='listar_cotizaciones_rechazadas'),
 ]
