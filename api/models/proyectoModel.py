@@ -7,7 +7,7 @@ class Proyectos(models.Model):
     PRESUPUESTADO_ADMIN = 1
     RECHAZADO = 2
     ACEPTADO = 3
-    EN_PROCESO = 4
+    EN_PROCESO = 4 # 
     DETENIDO = 5
     FINALIZADO = 6
     CANCELADO = 7
