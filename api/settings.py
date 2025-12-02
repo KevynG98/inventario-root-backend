@@ -15,6 +15,8 @@ load_dotenv(BASE_DIR / ".env")
 # ======================================================
 DEV = os.getenv("DEV", "True").lower() == "true"  # True = base de pruebas
 
+isProd = True
+
 hostname_ip = socket.gethostbyname(socket.gethostname())
 if hostname_ip.startswith("10."):
     NETWORK = "lan"
@@ -30,12 +32,27 @@ print("💾 Base activa:", "inventariopruebas" if DEV else "inventarioproduccion
 # 🔐 SECRET / DEBUG
 # ======================================================
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-key")
-DEBUG = True  # puedes dejarlo activo para ver errores
+DEBUG = False  # puedes dejarlo activo para ver errores
 
 # ======================================================
 # ⚙️ CORS / CSRF / HOSTS
 # ======================================================
-if NETWORK == "lan":
+if isProd:
+    ALLOWED_HOSTS = [
+        ".onrender.com",
+        "localhost",
+        "127.0.0.1",
+    ]
+
+    # Permite cualquier origen
+    CORS_ALLOW_ALL_ORIGINS = True  
+
+    CORS_ALLOWED_ORIGINS = [
+        "https://*.onrender.com",
+        "http://localhost",
+        "http://127.0.0.1",
+    ]
+elif NETWORK == "lan":
     ALLOWED_HOSTS = ["10.10.20.16", "localhost"]
     CORS_ALLOWED_ORIGINS = [
         "http://10.10.20.16:3000",
