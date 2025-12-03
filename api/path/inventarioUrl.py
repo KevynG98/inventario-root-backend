@@ -32,14 +32,6 @@ from ..views.inventarioSegurosView import (
     eliminar_seguros,
     obtener_seguros,
 )
-from ..views.inventarioPrecioView import (
-    listar_precios,
-    crear_precio,
-    actualizar_precio,
-    eliminar_precio,
-    buscar_precios,
-)
-
 urlpatterns = [
     #Marcas CRUD
     path('marcas/', listar_marcas, name='listar_marcas'),
@@ -73,12 +65,4 @@ urlpatterns = [
     path('seguros-actualizar/<int:pk>/', actualizar_seguros, name='actualizar_seguros'),
     path('seguros-eliminar/<int:pk>/', eliminar_seguros, name='eliminar_seguros'),
     path('seguros/<int:pk>/', obtener_seguros, name='obtener_seguros'),
-    
-    #Precio CRUD
-    path('precios/', listar_precios),
-    path('precios-crear/', crear_precio),
-    path('precios-actualizar/<int:pk>/', actualizar_precio),
-    path('precios-eliminar/<int:pk>/', eliminar_precio),
-    path('precios/<int:pk>/', eliminar_precio),
-    path('precios/buscar/', buscar_precios, name='buscar_precios'),
 ]
