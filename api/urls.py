@@ -15,6 +15,7 @@ from drf_yasg import openapi  # type: ignore
 
 from .path import inventarioUrl, userUrl, rolUrl, proyectosUrl
 from .views.emailTestView import correo_prueba
+from .views.contactEmailView import enviar_contacto
 
 
 def get_csrf(request):
@@ -42,6 +43,7 @@ urlpatterns = [
     path('inventario/', include(inventarioUrl)),
     path('proyecto/', include(proyectosUrl)),
     path('correo-prueba/', correo_prueba, name='correo_prueba'),
+    path('correo/contacto/', enviar_contacto, name='correo_contacto'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
