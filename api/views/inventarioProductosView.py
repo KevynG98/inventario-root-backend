@@ -1,13 +1,45 @@
+from decimal import Decimal, InvalidOperation
 from django.db.models import Q
+from rest_framework.parsers import MultiPartParser, FormParser
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
+from openpyxl import load_workbook
 
 from api.utils.pagination import CustomPageNumberPagination
 from ..models.inventarioProductoModel import InventarioProducto
 from ..serializers.inventarioProductoSerializer import InventarioProductoSerializer
+
+
+def _parse_decimal(value, default="0"):
+    """
+    Convierte valores de Excel a Decimal de forma tolerante.
+    """
+    if value is None:
+        return Decimal(default)
+    if isinstance(value, (int, float, Decimal)):
+        return Decimal(str(value))
+    text = str(value).strip().replace(",", "")
+    if not text:
+        return Decimal(default)
+    try:
+        return Decimal(text)
+    except (InvalidOperation, ValueError):
+        return Decimal(default)
+
+
+def _codigo_generado(existentes, contador):
+    """
+    Genera un código con prefijo IMP- que no exista en la base/local.
+    """
+    while True:
+        codigo = f"IMP-{contador:05d}"
+        contador += 1
+        if codigo not in existentes:
+            existentes.add(codigo)
+            return codigo, contador
 
 
 @swagger_auto_schema(method='get', operation_summary="Listar productos activos", tags=["inventario-productos"])
@@ -110,3 +142,109 @@ def buscar_productos(request):
     result_page = paginator.paginate_queryset(queryset, request)
     serializer = InventarioProductoSerializer(result_page, many=True)
     return paginator.get_paginated_response(serializer.data)
+
+
+@swagger_auto_schema(
+    method='post',
+    operation_summary="Carga masiva de productos desde Excel (xlsx)",
+    tags=["inventario-productos"],
+    manual_parameters=[
+        openapi.Parameter(
+            'file',
+            openapi.IN_FORM,
+            description='Archivo Excel con columnas: Nombre, Precio de venta, Coste',
+            type=openapi.TYPE_FILE,
+            required=True
+        )
+    ],
+    responses={
+        200: openapi.Response(
+            description="Resultado de la importación",
+            examples={
+                "application/json": {
+                    "creados": 10,
+                    "errores": [
+                        {"fila": 3, "detalle": "Nombre vacío"}
+                    ],
+                    "resumen": "10 productos creados, 2 filas con errores"
+                }
+            }
+        )
+    }
+)
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def carga_masiva_productos(request):
+    """
+    Recibe un Excel y crea productos en bloque con valores por defecto.
+    Columnas soportadas: Nombre, Precio de venta, Coste.
+    """
+    archivo = request.FILES.get('file')
+    if not archivo:
+        return Response({"error": "No se envió archivo con clave 'file'."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        libro = load_workbook(archivo, data_only=True, read_only=True)
+        hoja = libro.active
+    except Exception as exc:
+        return Response({"error": "No se pudo leer el Excel", "detalle": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    existentes = set(InventarioProducto.objects.values_list('codigo_inventario', flat=True))
+    contador = len(existentes) + 1
+
+    creados = []
+    errores = []
+    objetos = []
+    batch_size = 500
+
+    for idx, fila in enumerate(hoja.iter_rows(min_row=2, values_only=True), start=2):
+        nombre, precio_venta, coste = (fila + (None, None, None))[:3] if fila else (None, None, None)
+        if not nombre or str(nombre).strip() == "":
+            errores.append({"fila": idx, "detalle": "Nombre vacío"})
+            continue
+
+        codigo, contador = _codigo_generado(existentes, contador)
+        payload = {
+            "estado": "alta",
+            "categoria": "General",
+            "subcategoria": "",
+            "marca": "Sin marca",
+            "principio_activo": "N/A",
+            "nombre": str(nombre).strip(),
+            "codigo_inventario": codigo,
+            "unidad_compra": "Unidad",
+            "unidad_despacho": "Unidad",
+            "unidades_por_paquete": 1,
+            "precio_compre": _parse_decimal(coste),
+            "precio_stock": _parse_decimal(precio_venta),
+            "barcode": "",
+            "proveedor": "",
+            "is_active": True,
+        }
+
+        serializer = InventarioProductoSerializer(data=payload)
+        if serializer.is_valid():
+            objetos.append(InventarioProducto(**serializer.validated_data))
+        else:
+            errores.append({"fila": idx, "detalle": serializer.errors})
+
+        # flush por lotes para no agotar memoria
+        if len(objetos) >= batch_size:
+            InventarioProducto.objects.bulk_create(objetos, batch_size=batch_size)
+            creados.extend([obj.codigo_inventario for obj in objetos])
+            objetos = []
+
+    if objetos:
+        InventarioProducto.objects.bulk_create(objetos, batch_size=batch_size)
+        creados.extend([obj.codigo_inventario for obj in objetos])
+
+    resumen = f"{len(creados)} productos creados, {len(errores)} filas con errores"
+    return Response(
+        {
+            "creados": len(creados),
+            "codigos_generados": creados[:50],  # muestra primeros 50
+            "errores": errores,
+            "resumen": resumen,
+        },
+        status=status.HTTP_200_OK
+    )

@@ -24,6 +24,7 @@ from ..views.inventarioProductosView import (
     obtener_producto,
     actualizar_producto,
     eliminar_producto,
+    carga_masiva_productos,
 )
 from ..views.inventarioSegurosView import (
     listar_seguros,
@@ -58,6 +59,7 @@ urlpatterns = [
     path('productos/<int:pk>/', obtener_producto),
     path('productos-actualizar/<int:pk>/', actualizar_producto),
     path('productos-eliminar/<int:pk>/', eliminar_producto),
+    path('productos-carga-masiva/', carga_masiva_productos),
     
     #Seguros CRUD
     path('seguros/', listar_seguros, name='listar_seguros'),
