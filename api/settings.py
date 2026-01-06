@@ -115,11 +115,7 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PRUEBAS_PASSWORD"),
         "HOST": os.getenv("DB_PRUEBAS_HOST"),
         "PORT": os.getenv("DB_PRUEBAS_PORT"),
-        "OPTIONS": {
-            "ssl": {
-                "ca": "/etc/ssl/certs/ca-certificates.crt" if os.path.exists("/etc/ssl/certs/ca-certificates.crt") else None,
-            },
-        },
+        # Puedes reactivar SSL si tu proveedor lo exige. Conexión sin opciones para depurar.
     }
 }
 
