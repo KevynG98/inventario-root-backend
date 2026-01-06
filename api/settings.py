@@ -115,7 +115,11 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PRUEBAS_PASSWORD"),
         "HOST": os.getenv("DB_PRUEBAS_HOST"),
         "PORT": os.getenv("DB_PRUEBAS_PORT"),
-        # Puedes reactivar SSL si tu proveedor lo exige. Conexión sin opciones para depurar.
+        "OPTIONS": {
+            "ssl": {
+                "ca": "/etc/ssl/certs/ca-certificates.crt" if os.path.exists("/etc/ssl/certs/ca-certificates.crt") else None,
+            },
+        },
     }
 }
 
@@ -194,7 +198,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ======================================================
 # 📧 Email (configurable por entorno)
 # ======================================================
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'api.utils.custom_email_backend.ConfiguredEmailBackend'
 # Para desarrollo, puedes usar el backend de consola:
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
