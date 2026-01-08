@@ -1,5 +1,6 @@
 import ssl
 import socket
+import time
 from django.core.mail.backends.smtp import EmailBackend as SMTPBackend
 
 class ConfiguredEmailBackend(SMTPBackend):
@@ -17,6 +18,9 @@ class ConfiguredEmailBackend(SMTPBackend):
         if self.connection:
             return False
         
+        print(f"⏱️ [EMAIL TIMING] Iniciando conexión SMTP a {self.host}:{self.port}...")
+        start_time = time.time()
+
         # --- PARCHE IPv4 ---
         # Render y otros hostings a veces fallan con IPv6 (Errno 101).
         # Forzamos momentáneamente la resolución DNS a IPv4.
@@ -24,16 +28,28 @@ class ConfiguredEmailBackend(SMTPBackend):
 
         def ipv4_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
             # Si se pide familia no especificada (0) o IPv6, forzamos IPv4 (AF_INET)
+            dns_start = time.time()
             if family == 0 or family == socket.AF_INET6:
                 family = socket.AF_INET
-            return original_getaddrinfo(host, port, family, type, proto, flags)
+            
+            res = original_getaddrinfo(host, port, family, type, proto, flags)
+            dns_end = time.time()
+            print(f"⏱️ [EMAIL TIMING] DNS Resolution ({host}) took {dns_end - dns_start:.4f}s")
+            return res
 
         socket.getaddrinfo = ipv4_getaddrinfo
         # -------------------
 
         try:
-            return super().open()
+            print(f"⏱️ [EMAIL TIMING] Llamando a super().open()...")
+            result = super().open()
+            end_time = time.time()
+            print(f"⏱️ [EMAIL TIMING] Conexión establecida exitosamente en {end_time - start_time:.4f}s")
+            return result
         except Exception as e:
+            end_time = time.time()
+            print(f"❌ [EMAIL ERROR] Falló conexión tras {end_time - start_time:.4f}s. Error: {e}")
+
             # DIAGNÓSTICO: Si falla por Network Unreachable (101), imprimimos info de resolución
             if isinstance(e, OSError) and getattr(e, 'errno', None) == 101:
                 print(f"❌ [EMAIL ERROR] Network unreachable connecting to {self.host}:{self.port}")
