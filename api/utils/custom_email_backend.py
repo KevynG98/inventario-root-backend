@@ -6,10 +6,10 @@ class ConfiguredEmailBackend(SMTPBackend):
     def _get_ssl_context(self):
         # Crea un contexto SSL por defecto
         context = ssl.create_default_context()
-        # Opcional: Si Render sigue fallando por certificados, puedes descomentar la siguiente línea
-        # para deshabilitar la verificación (NO RECOMENDADO para producción sensible, pero útil para debug)
-        # context.check_hostname = False
-        # context.verify_mode = ssl.CERT_NONE
+        # En entornos como Render/Vercel, a veces la resolución DNS reversa falla 
+        # y causa delays. Relajamos esto para ganar velocidad.
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
         return context
 
     def open(self):
