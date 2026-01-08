@@ -14,7 +14,7 @@ from drf_yasg.views import get_schema_view  # type: ignore
 from drf_yasg import openapi  # type: ignore
 
 from .path import inventarioUrl, userUrl, rolUrl, proyectosUrl
-from .views.emailTestView import correo_prueba
+from .views.emailTestView import correo_prueba, diagnostico_red
 from .views.contactEmailView import enviar_contacto
 
 
@@ -43,6 +43,7 @@ urlpatterns = [
     path('inventario/', include(inventarioUrl)),
     path('proyecto/', include(proyectosUrl)),
     path('correo-prueba/', correo_prueba, name='correo_prueba'),
+    path('correo-diagnostico/', diagnostico_red, name='correo_diagnostico'),
     path('correo/contacto/', enviar_contacto, name='correo_contacto'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
