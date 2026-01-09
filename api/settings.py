@@ -17,7 +17,7 @@ DEV = os.getenv("DEV", "True").lower() == "true"  # True = base de pruebas
 
 isProd = True
 
-hostname_ip = socket.gethostbyname(socket.gethostname())
+hostname_ip = socket.gethostbyname(socket.gethostname()) 
 if hostname_ip.startswith("10."):
     NETWORK = "lan"
 elif hostname_ip.startswith("172."):
