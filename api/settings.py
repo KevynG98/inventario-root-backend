@@ -32,7 +32,7 @@ print("💾 Base activa:", "inventariopruebas" if DEV else "inventarioproduccion
 # 🔐 SECRET / DEBUG
 # ======================================================
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-key")
-DEBUG = False  # puedes dejarlo activo para ver errores
+DEBUG = DEV  # True si estamos en desarrollo
 
 # ======================================================
 # ⚙️ CORS / CSRF / HOSTS
@@ -126,7 +126,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_yasg',
@@ -190,6 +192,19 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'api' / 'static']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ======================================================
+# ☁️ CLOUDINARY STORAGE
+# ======================================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # ======================================================
 # 📧 Email (configurable por entorno)

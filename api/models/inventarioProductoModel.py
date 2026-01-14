@@ -16,3 +16,4 @@ class InventarioProducto(models.Model):
     is_active = models.BooleanField(default=True)
     barcode = models.CharField(max_length=100, blank=True, null=True)
     proveedor = models.CharField(max_length=100, blank=True, null=True)
+    imagen = models.ImageField(upload_to='productos/', blank=True, null=True)

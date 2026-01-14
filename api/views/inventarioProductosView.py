@@ -42,20 +42,56 @@ def _codigo_generado(existentes, contador):
             return codigo, contador
 
 
-@swagger_auto_schema(method='get', operation_summary="Listar productos activos", tags=["inventario-productos"])
+@swagger_auto_schema(
+    method='get', 
+    operation_summary="Listar productos activos con filtros", 
+    tags=["inventario-productos"],
+    manual_parameters=[
+        openapi.Parameter('marca', openapi.IN_QUERY, type=openapi.TYPE_STRING, description="Filtrar por marca"),
+        openapi.Parameter('categoria', openapi.IN_QUERY, type=openapi.TYPE_STRING, description="Filtrar por categoría/tipo"),
+        openapi.Parameter('nombre', openapi.IN_QUERY, type=openapi.TYPE_STRING, description="Filtrar por nombre"),
+        openapi.Parameter('min_price', openapi.IN_QUERY, type=openapi.TYPE_NUMBER, description="Precio mínimo"),
+        openapi.Parameter('max_price', openapi.IN_QUERY, type=openapi.TYPE_NUMBER, description="Precio máximo"),
+    ]
+)
 @api_view(['GET'])
 def listar_productos(request):
     inventarios = InventarioProducto.objects.filter(is_active=True).order_by('id')
+
+    # Filtros
+    marca = request.query_params.get('marca')
+    categoria = request.query_params.get('categoria')
+    nombre = request.query_params.get('nombre')
+    min_price = request.query_params.get('min_price')
+    max_price = request.query_params.get('max_price')
+
+    if marca:
+        inventarios = inventarios.filter(marca__icontains=marca)
+    if categoria:
+        inventarios = inventarios.filter(categoria__icontains=categoria)
+    if nombre:
+        inventarios = inventarios.filter(nombre__icontains=nombre)
+    if min_price:
+        try:
+            inventarios = inventarios.filter(precio_stock__gte=min_price)
+        except ValueError:
+            pass
+    if max_price:
+        try:
+            inventarios = inventarios.filter(precio_stock__lte=max_price)
+        except ValueError:
+            pass
+
     paginator = CustomPageNumberPagination()
     result_page = paginator.paginate_queryset(inventarios, request)
-    serializer = InventarioProductoSerializer(result_page, many=True)
+    serializer = InventarioProductoSerializer(result_page, many=True, context={'request': request})
     return paginator.get_paginated_response(serializer.data)
 
 
 @swagger_auto_schema(method='post', request_body=InventarioProductoSerializer, operation_summary="Crear nuevo producto", tags=["inventario-productos"])
 @api_view(['POST'])
 def crear_producto(request):
-    serializer = InventarioProductoSerializer(data=request.data)
+    serializer = InventarioProductoSerializer(data=request.data, context={'request': request})
     serializer.is_valid(raise_exception=True)
     serializer.save()
     return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -68,7 +104,7 @@ def obtener_producto(request, pk):
         inventario = InventarioProducto.objects.get(pk=pk)
     except InventarioProducto.DoesNotExist:
         return Response({"error": "Producto no encontrado"}, status=status.HTTP_404_NOT_FOUND)
-    serializer = InventarioProductoSerializer(inventario)
+    serializer = InventarioProductoSerializer(inventario, context={'request': request})
     return Response(serializer.data)
 
 
@@ -80,10 +116,11 @@ def actualizar_producto(request, pk):
     except InventarioProducto.DoesNotExist:
         return Response({"error": "Producto no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
-    serializer = InventarioProductoSerializer(inventario, data=request.data, partial=True)
+    serializer = InventarioProductoSerializer(inventario, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
+    print("❌ Error al actualizar producto:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -140,7 +177,7 @@ def buscar_productos(request):
 
     paginator = CustomPageNumberPagination()
     result_page = paginator.paginate_queryset(queryset, request)
-    serializer = InventarioProductoSerializer(result_page, many=True)
+    serializer = InventarioProductoSerializer(result_page, many=True, context={'request': request})
     return paginator.get_paginated_response(serializer.data)
 
 
