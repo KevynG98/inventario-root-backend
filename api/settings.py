@@ -134,6 +134,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'api.apps.ApiConfig',
     'django_extensions',
+    'anymail',
 ]
 
 REST_FRAMEWORK = {
@@ -207,16 +208,22 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # ======================================================
-# 📧 Email (configurable por entorno)
+# 📧 Email (Resend via Anymail)
 # ======================================================
-EMAIL_BACKEND = 'api.utils.custom_email_backend.ConfiguredEmailBackend'
-# Para desarrollo, puedes usar el backend de consola:
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT') or 465)
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False') == 'True'
-EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-EMAIL_TIMEOUT = 30  # Aumentado a 30 segundos para dar más margen a Gmail en Render
+# Usamos Anymail con el driver de Resend (API) en lugar de SMTP.
+EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+ANYMAIL = {
+    "RESEND_API_KEY": os.getenv("RESEND_API_KEY"),
+}
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@resend.dev")
+# El EMAIL_HOST_USER se mantiene si se usa en lógica de negocio como destinatario por defecto
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", DEFAULT_FROM_EMAIL)
+
+# Configuración anterior (SMTP) deshabilitada/comentada por referencia:
+# EMAIL_BACKEND = 'api.utils.custom_email_backend.ConfiguredEmailBackend'
+# EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+# EMAIL_PORT = int(os.environ.get('EMAIL_PORT') or 465)
+# EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False') == 'True'
+# EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'True') == 'True'
+# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
