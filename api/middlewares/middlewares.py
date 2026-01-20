@@ -18,7 +18,8 @@ class AuditoriaMiddleware:
         data = {}
 
         try:
-            if request.method in ['POST', 'PUT', 'DELETE'] and not any(request.path.startswith(p) for p in ['/admin', '/static']):
+            content_type = request.headers.get('Content-Type', '')
+            if request.method in ['POST', 'PUT', 'DELETE'] and not any(request.path.startswith(p) for p in ['/admin', '/static']) and not content_type.startswith('multipart/'):
                 cuerpo = request.body
                 request._body = cuerpo
 

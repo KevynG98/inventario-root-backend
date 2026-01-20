@@ -32,7 +32,7 @@ print("💾 Base activa:", "inventariopruebas" if DEV else "inventarioproduccion
 # 🔐 SECRET / DEBUG
 # ======================================================
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-dev-key")
-DEBUG = False  # puedes dejarlo activo para ver errores
+DEBUG = DEV  # True si estamos en desarrollo
 
 # ======================================================
 # ⚙️ CORS / CSRF / HOSTS
@@ -126,12 +126,15 @@ INSTALLED_APPS = [
     'corsheaders',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_yasg',
     'api.apps.ApiConfig',
     'django_extensions',
+    'anymail',
 ]
 
 REST_FRAMEWORK = {
@@ -192,16 +195,35 @@ STATICFILES_DIRS = [BASE_DIR / 'api' / 'static']
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ======================================================
-# 📧 Email (configurable por entorno)
+# ☁️ CLOUDINARY STORAGE
 # ======================================================
-EMAIL_BACKEND = 'api.utils.custom_email_backend.ConfiguredEmailBackend'
-# Para desarrollo, puedes usar el backend de consola:
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT') or 465)
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False') == 'True'
-EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-EMAIL_TIMEOUT = 30  # Aumentado a 30 segundos para dar más margen a Gmail en Render
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ======================================================
+# 📧 Email (Resend via Anymail)
+# ======================================================
+# Usamos Anymail con el driver de Resend (API) en lugar de SMTP.
+EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
+ANYMAIL = {
+    "RESEND_API_KEY": os.getenv("RESEND_API_KEY"),
+}
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@resend.dev")
+# El EMAIL_HOST_USER se mantiene si se usa en lógica de negocio como destinatario por defecto
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", DEFAULT_FROM_EMAIL)
+
+# Configuración anterior (SMTP) deshabilitada/comentada por referencia:
+# EMAIL_BACKEND = 'api.utils.custom_email_backend.ConfiguredEmailBackend'
+# EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+# EMAIL_PORT = int(os.environ.get('EMAIL_PORT') or 465)
+# EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False') == 'True'
+# EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'True') == 'True'
+# EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
