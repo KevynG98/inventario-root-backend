@@ -33,17 +33,16 @@ def enviar_correo_nueva_cotizacion(*, nombre_empresa: str, email_empresa: str, t
     if productos:
         texto_plano += "Productos solicitados:\n"
         for p in productos:
-            texto_plano += f"- {p.get('nombre', '')}: {p.get('cantidad', '')}\n"
+            texto_plano += f"- {p.get('nombre', '')}\n"
 
     # HTML para listado de productos
     productos_html_rows = ""
     for p in productos:
         nombre = p.get("nombre", "")
-        cantidad = p.get("cantidad", "")
+        # cantidad = p.get("cantidad", "") # Omitido
         productos_html_rows += f"""
                           <tr>
                             <td style=\"padding:6px 8px;color:#455a64;font-size:13px;border-bottom:1px solid #eceff1;\">{nombre}</td>
-                            <td style=\"padding:6px 8px;color:#263238;font-weight:600;font-size:13px;text-align:center;border-bottom:1px solid #eceff1;\">{cantidad}</td>
                           </tr>
         """
 
@@ -55,7 +54,6 @@ def enviar_correo_nueva_cotizacion(*, nombre_empresa: str, email_empresa: str, t
                           <thead>
                             <tr style=\"background-color:#eceff1;\">
                               <th align=\"left\" style=\"padding:8px 8px;color:#607d8b;font-size:12px;text-transform:uppercase;letter-spacing:0.03em;\">Producto</th>
-                              <th align=\"center\" style=\"padding:8px 8px;color:#607d8b;font-size:12px;text-transform:uppercase;letter-spacing:0.03em;\">Cantidad</th>
                             </tr>
                           </thead>
                           <tbody>
