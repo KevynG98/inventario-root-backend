@@ -27,7 +27,7 @@ class Proyectos(models.Model):
     nombreEmpresa = models.CharField(max_length=200)
     nombreProyecto = models.CharField(max_length=200)
     direccionEmpresa = models.TextField()
-    telefonoEmpresa = models.CharField(max_length=20)
+    telefonoEmpresa = models.CharField(max_length=50)
     emailEmpresa = models.EmailField()
     totalPresupuestado = models.DecimalField(max_digits=12, decimal_places=2)
 
