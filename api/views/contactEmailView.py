@@ -6,6 +6,10 @@ from rest_framework.response import Response
 from api.utils.email_utils import enviar_correo_html
 
 
+# URL de la imagen del pie de página para correos de "Nueva cotización".
+# Reemplaza este valor por la URL pública donde hospedes la imagen adjunta (flama azul).
+FOOTER_GAS_IMAGE_URL = "api/assets/llama-azul-de-la-estufa-en-cocina-concepto-del-gas-y-energía-138429142.webp"
+
 def enviar_correo_nueva_cotizacion(*, nombre_empresa: str, email_empresa: str, telefono_empresa: str, direccion: str, productos: list | None = None) -> None:
     """Envía un correo al mismo destinatario de ``enviar_contacto`` avisando de una nueva cotización.
 
@@ -106,8 +110,14 @@ def enviar_correo_nueva_cotizacion(*, nombre_empresa: str, email_empresa: str, t
                       </td>
                     </tr>
                     <tr>
-                      <td style="background-color:#eceff1;padding:12px 24px;text-align:center;color:#90a4ae;font-size:11px;">
-                        Este es un mensaje automático relacionado con nuevas cotizaciones.
+                      <td background="{FOOTER_GAS_IMAGE_URL}" style="background-image:url('{FOOTER_GAS_IMAGE_URL}');background-size:cover;background-position:center;padding:0;">
+                        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:rgba(0,0,0,0.45);">
+                          <tr>
+                            <td style="padding:18px 24px;text-align:center;color:#ffffff;font-size:11px;line-height:1.5;">
+                              Este es un mensaje automático relacionado con nuevas cotizaciones.
+                            </td>
+                          </tr>
+                        </table>
                       </td>
                     </tr>
                   </table>
@@ -151,16 +161,67 @@ def enviar_contacto(request):
         )
 
     texto_plano = (
-        f"Nuevo mensaje desde la landing:\n"
+        "Mensaje de contacto desde gamatec.org:\n\n"
         f"Nombre: {nombre}\n"
         f"Correo: {email}\n\n"
         f"Mensaje:\n{mensaje}"
     )
+
     html = f"""
-        <p><strong>Nuevo mensaje desde la landing</strong></p>
-        <p><strong>Nombre:</strong> {nombre}</p>
-        <p><strong>Correo:</strong> {email}</p>
-        <p><strong>Mensaje:</strong><br>{mensaje.replace('\n', '<br>')}</p>
+        <html>
+          <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8;padding:20px 0;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <tr>
+                      <td style="background:linear-gradient(90deg,#0d47a1,#1976d2);padding:20px 24px;color:#ffffff;">
+                        <h1 style="margin:0;font-size:22px;font-weight:600;">Nuevo mensaje de contacto</h1>
+                        <p style="margin:4px 0 0;font-size:14px;opacity:0.9;">Has recibido un nuevo mensaje desde la landing.</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:24px;background-color:#ffffff;">
+                        <p style="margin:0 0 16px;color:#37474f;font-size:14px;">Hola,</p>
+                        <p style="margin:0 0 16px;color:#455a64;font-size:14px;">
+                          Estos son los datos del contacto recibido:
+                        </p>
+                        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;">
+                          <tr>
+                            <td style="padding:8px 0;color:#607d8b;width:150px;">Nombre:</td>
+                            <td style="padding:8px 0;color:#263238;font-weight:600;">{nombre}</td>
+                          </tr>
+                          <tr>
+                            <td style="padding:8px 0;color:#607d8b;">Correo:</td>
+                            <td style="padding:8px 0;color:#1976d2;font-weight:600;">{email}</td>
+                          </tr>
+                        </table>
+                        <p style="margin:24px 0 8px;color:#37474f;font-size:14px;font-weight:600;">Mensaje</p>
+                        <div style="padding:12px 14px;background-color:#fafbfc;border-radius:6px;border:1px solid #eceff1;color:#455a64;font-size:14px;line-height:1.5;">
+                          {mensaje.replace('\n', '<br>')}
+                        </div>
+                        <p style="margin:24px 0 0;color:#78909c;font-size:12px;">
+                          Te recomendamos dar seguimiento a este mensaje a la brevedad.
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td background="{FOOTER_GAS_IMAGE_URL}" style="background-image:url('{FOOTER_GAS_IMAGE_URL}');background-size:cover;background-position:center;padding:0;">
+                        <table width="100%" cellpadding="0" cellspacing="0" style="background-color:rgba(0,0,0,0.45);">
+                          <tr>
+                            <td style="padding:18px 24px;text-align:center;color:#ffffff;font-size:11px;line-height:1.5;">
+                              Este es un mensaje automático generado desde el formulario de contacto de la landing.
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
     """
 
     try:

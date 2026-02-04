@@ -37,7 +37,7 @@ def generar_receta_pdf(request):
 
     c.setFont("Helvetica", 9)
     c.drawString(50, height - 95, doctor.get("clinica", ""))
-    c.drawString(50, height - 110, f"Teléfono: {doctor.get('telefono', '')}")
+    c.drawString(50, height - 110, f"Teléfono:{doctor.get('telefono', '')}")
     c.drawString(50, height - 125, f"Correo electrónico: {doctor.get('correo', '')}")
 
     # Fecha y hora
