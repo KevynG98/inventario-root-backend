@@ -47,8 +47,6 @@ def _codigo_generado(existentes, contador):
     operation_summary="Listar productos activos con filtros", 
     tags=["inventario-productos"],
     manual_parameters=[
-        openapi.Parameter('marca', openapi.IN_QUERY, type=openapi.TYPE_STRING, description="Filtrar por marca"),
-        openapi.Parameter('categoria', openapi.IN_QUERY, type=openapi.TYPE_STRING, description="Filtrar por categoría/tipo"),
         openapi.Parameter('nombre', openapi.IN_QUERY, type=openapi.TYPE_STRING, description="Filtrar por nombre"),
         openapi.Parameter('min_price', openapi.IN_QUERY, type=openapi.TYPE_NUMBER, description="Precio mínimo"),
         openapi.Parameter('max_price', openapi.IN_QUERY, type=openapi.TYPE_NUMBER, description="Precio máximo"),
@@ -59,16 +57,10 @@ def listar_productos(request):
     inventarios = InventarioProducto.objects.filter(is_active=True).order_by('id')
 
     # Filtros
-    marca = request.query_params.get('marca')
-    categoria = request.query_params.get('categoria')
     nombre = request.query_params.get('nombre')
     min_price = request.query_params.get('min_price')
     max_price = request.query_params.get('max_price')
 
-    if marca:
-        inventarios = inventarios.filter(marca__icontains=marca)
-    if categoria:
-        inventarios = inventarios.filter(categoria__icontains=categoria)
     if nombre:
         inventarios = inventarios.filter(nombre__icontains=nombre)
     if min_price:
@@ -141,10 +133,9 @@ def eliminar_producto(request, pk):
     operation_summary="Buscar productos",
     tags=["inventario-productos"],
     manual_parameters=[
-        openapi.Parameter('q', openapi.IN_QUERY, description='Búsqueda libre por nombre, código de inventario o código de barras', type=openapi.TYPE_STRING),
+        openapi.Parameter('q', openapi.IN_QUERY, description='Búsqueda libre por nombre o código de inventario', type=openapi.TYPE_STRING),
         openapi.Parameter('nombre', openapi.IN_QUERY, description='Filtrar por nombre (icontains)', type=openapi.TYPE_STRING),
         openapi.Parameter('codigo_inventario', openapi.IN_QUERY, description='Filtrar por código de inventario (icontains)', type=openapi.TYPE_STRING),
-        openapi.Parameter('codigo_barras', openapi.IN_QUERY, description='Filtrar por código de barras (icontains)', type=openapi.TYPE_STRING),
         openapi.Parameter('page', openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
         openapi.Parameter('page_size', openapi.IN_QUERY, type=openapi.TYPE_INTEGER),
     ]
@@ -156,7 +147,6 @@ def buscar_productos(request):
     q = request.query_params.get('q')
     nombre = request.query_params.get('nombre')
     codigo_inventario = request.query_params.get('codigo_inventario')
-    codigo_barras = request.query_params.get('codigo_barras')
 
     filtros = Q()
     if q:
@@ -164,13 +154,10 @@ def buscar_productos(request):
         if ql:
             filtros |= Q(nombre__icontains=ql)
             filtros |= Q(codigo_inventario__icontains=ql)
-            filtros |= Q(barcode__icontains=ql)
     if nombre:
         filtros &= Q(nombre__icontains=nombre)
     if codigo_inventario:
         filtros &= Q(codigo_inventario__icontains=codigo_inventario)
-    if codigo_barras:
-        filtros &= Q(barcode__icontains=codigo_barras)
 
     if filtros:
         queryset = queryset.filter(filtros)
@@ -242,20 +229,10 @@ def carga_masiva_productos(request):
 
         codigo, contador = _codigo_generado(existentes, contador)
         payload = {
-            "estado": "alta",
-            "categoria": "General",
-            "subcategoria": "",
-            "marca": "Sin marca",
-            "principio_activo": "N/A",
             "nombre": str(nombre).strip(),
             "codigo_inventario": codigo,
-            "unidad_compra": "Unidad",
-            "unidad_despacho": "Unidad",
-            "unidades_por_paquete": 1,
             "precio_compre": _parse_decimal(coste),
             "precio_stock": _parse_decimal(precio_venta),
-            "barcode": "",
-            "proveedor": "",
             "is_active": True,
         }
 
