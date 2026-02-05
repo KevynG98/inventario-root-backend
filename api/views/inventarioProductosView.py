@@ -7,6 +7,9 @@ from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.response import Response
 from openpyxl import load_workbook
+import io
+import time
+from django.core.files.base import ContentFile
 
 from api.utils.pagination import CustomPageNumberPagination
 from ..models.inventarioProductoModel import InventarioProducto
@@ -176,7 +179,7 @@ def buscar_productos(request):
         openapi.Parameter(
             'file',
             openapi.IN_FORM,
-            description='Archivo Excel con columnas: Nombre, Precio de venta, Coste',
+            description='Archivo Excel con columnas: Nombre, Imagen (incrustada)',
             type=openapi.TYPE_FILE,
             required=True
         )
@@ -187,10 +190,8 @@ def buscar_productos(request):
             examples={
                 "application/json": {
                     "creados": 10,
-                    "errores": [
-                        {"fila": 3, "detalle": "Nombre vacío"}
-                    ],
-                    "resumen": "10 productos creados, 2 filas con errores"
+                    "errores": [],
+                    "resumen": "10 productos creados"
                 }
             }
         )
@@ -200,63 +201,82 @@ def buscar_productos(request):
 @parser_classes([MultiPartParser, FormParser])
 def carga_masiva_productos(request):
     """
-    Recibe un Excel y crea productos en bloque con valores por defecto.
-    Columnas soportadas: Nombre, Precio de venta, Coste.
+    Recibe un Excel, extrae títulos e imágenes incrustadas, y crea los productos.
     """
     archivo = request.FILES.get('file')
     if not archivo:
         return Response({"error": "No se envió archivo con clave 'file'."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        libro = load_workbook(archivo, data_only=True, read_only=True)
+        # Cargamos el libro SIN read_only para poder acceder a las imágenes
+        libro = load_workbook(archivo, data_only=True)
         hoja = libro.active
     except Exception as exc:
         return Response({"error": "No se pudo leer el Excel", "detalle": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Diccionario para mapear fila -> imagen
+    imagenes_por_fila = {}
+    
+    # Intentar extraer imágenes incrustadas
+    if hasattr(hoja, '_images'):
+        for img in hoja._images:
+            try:
+                row = img.anchor._from.row + 1 
+                img_data = img._data() 
+                ext = "jpg"
+                if hasattr(img, 'format') and img.format:
+                    ext = img.format.lower()
+                
+                img_filename = f"import_{row}_{int(time.time()*1000)}.{ext}"
+                imagenes_por_fila[row] = (img_filename, img_data)
+            except Exception as e:
+                print(f"Error extrayendo imagen: {e}")
 
     existentes = set(InventarioProducto.objects.values_list('codigo_inventario', flat=True))
     contador = len(existentes) + 1
 
     creados = []
     errores = []
-    objetos = []
-    batch_size = 500
+    
+    first_row = next(hoja.iter_rows(min_row=1, max_row=1, values_only=True), (None,))
+    start_row = 1
+    if first_row and str(first_row[0]).lower() in ['nombre', 'titulo', 'título', 'item']:
+        start_row = 2
 
-    for idx, fila in enumerate(hoja.iter_rows(min_row=2, values_only=True), start=2):
-        nombre, precio_venta, coste = (fila + (None, None, None))[:3] if fila else (None, None, None)
+    for idx, fila in enumerate(hoja.iter_rows(min_row=start_row, values_only=True), start=start_row):
+        if not fila or all(c is None for c in fila):
+            continue
+            
+        nombre = fila[0]
         if not nombre or str(nombre).strip() == "":
-            errores.append({"fila": idx, "detalle": "Nombre vacío"})
             continue
 
         codigo, contador = _codigo_generado(existentes, contador)
+        
         payload = {
             "nombre": str(nombre).strip(),
             "codigo_inventario": codigo,
-            "precio_compre": _parse_decimal(coste),
-            "precio_stock": _parse_decimal(precio_venta),
+            "precio_compre": 0,
+            "precio_stock": 0,
             "is_active": True,
         }
 
-        serializer = InventarioProductoSerializer(data=payload)
-        if serializer.is_valid():
-            objetos.append(InventarioProducto(**serializer.validated_data))
-        else:
-            errores.append({"fila": idx, "detalle": serializer.errors})
+        producto = InventarioProducto(**payload)
+        
+        if idx in imagenes_por_fila:
+            img_filename, img_bytes = imagenes_por_fila[idx]
+            producto.imagen.save(img_filename, ContentFile(img_bytes), save=False)
 
-        # flush por lotes para no agotar memoria
-        if len(objetos) >= batch_size:
-            InventarioProducto.objects.bulk_create(objetos, batch_size=batch_size)
-            creados.extend([obj.codigo_inventario for obj in objetos])
-            objetos = []
-
-    if objetos:
-        InventarioProducto.objects.bulk_create(objetos, batch_size=batch_size)
-        creados.extend([obj.codigo_inventario for obj in objetos])
+        try:
+            producto.save()
+            creados.append(producto.codigo_inventario)
+        except Exception as e:
+            errores.append({"fila": idx, "detalle": str(e)})
 
     resumen = f"{len(creados)} productos creados, {len(errores)} filas con errores"
     return Response(
         {
             "creados": len(creados),
-            "codigos_generados": creados[:50],  # muestra primeros 50
             "errores": errores,
             "resumen": resumen,
         },
