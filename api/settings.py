@@ -14,8 +14,7 @@ load_dotenv(BASE_DIR / ".env")
 # 🌍 ENTORNO Y RED DETECTADOS AUTOMÁTICAMENTE
 # ======================================================
 DEV = os.getenv("DEV", "True").lower() == "true"  # True = base de pruebas
-
-isProd = True
+isProd = not DEV
 
 hostname_ip = socket.gethostbyname(socket.gethostname()) 
 if hostname_ip.startswith("10."):
@@ -37,16 +36,19 @@ DEBUG = DEV  # True si estamos en desarrollo
 # ======================================================
 # ⚙️ CORS / CSRF / HOSTS
 # ======================================================
-if isProd:
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+
+if isProd or RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS = [
-        ".onrender.com",
         "localhost",
         "127.0.0.1",
+        ".onrender.com",
     ]
+    if RENDER_EXTERNAL_HOSTNAME:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-    # Permite cualquier origen
+    # Permite cualquier origen en producción para evitar bloqueos de CORS
     CORS_ALLOW_ALL_ORIGINS = True  
-
     CORS_ALLOWED_ORIGINS = [
         "https://*.onrender.com",
         "http://localhost",
@@ -85,6 +87,17 @@ if DEV:
     DB_PASS = os.getenv("DB_PRUEBAS_PASSWORD")
     DB_HOST = os.getenv("DB_PRUEBAS_HOST")
     DB_PORT = os.getenv("DB_PRUEBAS_PORT")
+    
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": DB_NAME,
+            "USER": DB_USER,
+            "PASSWORD": DB_PASS,
+            "HOST": DB_HOST,
+            "PORT": DB_PORT,
+        }
+    }
 else:
     DB_NAME = os.getenv("DB_PROD_NAME")
     DB_USER = os.getenv("DB_PROD_USER")
@@ -92,32 +105,34 @@ else:
     DB_HOST = os.getenv("DB_PROD_HOST")
     DB_PORT = os.getenv("DB_PROD_PORT")
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "mssql",
-#         "NAME": DB_NAME,
-#         "USER": DB_USER,
-#         "PASSWORD": DB_PASS,
-#         "HOST": DB_HOST,
-#         "PORT": DB_PORT,
-#         "OPTIONS": {
-#             "driver": ODBC_DRIVER,
-#             "extra_params": "Encrypt=yes;TrustServerCertificate=yes;"
-#         },
-#     }
-# }
+    # Si falta el host de producción, asumimos que se quiere usar la configuración de MySQL de respaldo
+    if not DB_HOST:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.mysql",
+                "NAME": os.getenv("DB_PRUEBAS_NAME"),
+                "USER": os.getenv("DB_PRUEBAS_USER"),
+                "PASSWORD": os.getenv("DB_PRUEBAS_PASSWORD"),
+                "HOST": os.getenv("DB_PRUEBAS_HOST"),
+                "PORT": os.getenv("DB_PRUEBAS_PORT"),
+            }
+        }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": "mssql",
+                "NAME": DB_NAME,
+                "USER": DB_USER,
+                "PASSWORD": DB_PASS,
+                "HOST": DB_HOST,
+                "PORT": DB_PORT,
+                "OPTIONS": {
+                    "driver": ODBC_DRIVER,
+                    "extra_params": "Encrypt=yes;TrustServerCertificate=yes;"
+                },
+            }
+        }
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("DB_PRUEBAS_NAME"),
-        "USER": os.getenv("DB_PRUEBAS_USER"),
-        "PASSWORD": os.getenv("DB_PRUEBAS_PASSWORD"),
-        "HOST": os.getenv("DB_PRUEBAS_HOST"),
-        "PORT": os.getenv("DB_PRUEBAS_PORT"),
-        # Puedes reactivar SSL si tu proveedor lo exige. Conexión sin opciones para depurar.
-    }
-}
 
 # ======================================================
 # 🔧 REST / APPS / MIDDLEWARE
