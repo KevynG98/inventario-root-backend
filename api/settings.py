@@ -38,22 +38,19 @@ DEBUG = DEV  # True si estamos en desarrollo
 # ======================================================
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 
-if isProd:
+if isProd or RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS = [
         "localhost",
         "127.0.0.1",
-        "inventario-root-backend.onrender.com",
-        "gamatec.org",
-        "www.gamatec.org",
+        ".onrender.com",
     ]
     if RENDER_EXTERNAL_HOSTNAME:
         ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-    CORS_ALLOW_ALL_ORIGINS = False
+    # Permite cualquier origen en producción para evitar bloqueos de CORS
+    CORS_ALLOW_ALL_ORIGINS = True  
     CORS_ALLOWED_ORIGINS = [
-        "https://gamatec.org",
-        "https://www.gamatec.org",
-        "https://inventario-root-backend.onrender.com",
+        "https://*.onrender.com",
         "http://localhost",
         "http://127.0.0.1",
     ]
@@ -73,8 +70,7 @@ else:
     ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
     CORS_ALLOWED_ORIGINS = ["http://localhost:3000", 
                             "http://127.0.0.1:3000",
-                            "http://localhost:5173",
-                            "http://localhost:4173"]
+                            "http://localhost:5173"]
 
 CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOW_CREDENTIALS = True
