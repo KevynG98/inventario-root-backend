@@ -42,7 +42,7 @@ if isProd:
     ALLOWED_HOSTS = [
         "localhost",
         "127.0.0.1",
-        ".onrender.com",
+        "https://inventario-root-backend.onrender.com",
         "gamatec.org",
         "www.gamatec.org",
     ]
