@@ -42,19 +42,18 @@ if isProd:
     ALLOWED_HOSTS = [
         "localhost",
         "127.0.0.1",
-        "https://inventario-root-backend.onrender.com",
+        "inventario-root-backend.onrender.com",
         "gamatec.org",
         "www.gamatec.org",
     ]
     if RENDER_EXTERNAL_HOSTNAME:
         ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-    # NO mezcles CORS_ALLOW_ALL_ORIGINS con CORS_ALLOWED_ORIGINS
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOWED_ORIGINS = [
         "https://gamatec.org",
         "https://www.gamatec.org",
-        "https://*.onrender.com",
+        "https://inventario-root-backend.onrender.com",
         "http://localhost",
         "http://127.0.0.1",
     ]
