@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
+from django.db import connection
 
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view  # type: ignore
@@ -22,6 +23,15 @@ from .views.contactEmailView import enviar_contacto
 
 def get_csrf(request):
     return JsonResponse({'csrfToken': get_token(request)})
+
+
+def health_check(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        return JsonResponse({"status": "ok", "database": "connected"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "database": str(e)}, status=503)
 
 
 schema_view = get_schema_view(
@@ -39,6 +49,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('', lambda request: redirect('schema-swagger-ui', permanent=False)),
+    path('health', health_check, name='health_check'),
     path('csrf/', get_csrf, name='csrf'),
     path('user/', include(userUrl)),
     path('rol/', include(rolUrl)),
