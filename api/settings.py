@@ -126,6 +126,8 @@ else:
                 "PASSWORD": DB_PASS,
                 "HOST": DB_HOST,
                 "PORT": DB_PORT,
+                "CONN_MAX_AGE": 600,
+                "CONN_HEALTH_CHECKS": True,
                 "OPTIONS": {
                     "driver": ODBC_DRIVER,
                     "extra_params": "Encrypt=yes;TrustServerCertificate=yes;"
