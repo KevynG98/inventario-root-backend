@@ -157,6 +157,7 @@ def buscar_productos(request):
         if ql:
             filtros |= Q(nombre__icontains=ql)
             filtros |= Q(codigo_inventario__icontains=ql)
+            filtros |= Q(detalles__icontains=ql)
     if nombre:
         filtros &= Q(nombre__icontains=nombre)
     if codigo_inventario:
